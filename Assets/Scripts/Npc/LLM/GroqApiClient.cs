@@ -34,11 +34,23 @@ public class GroqResponse
 
 public class GroqApiClient : MonoBehaviour
 {
+    public static GroqApiClient Instance { get; private set; }
+
     private const string API_URL = "https://api.groq.com/openai/v1/chat/completions";
     
     [Header("API Settings")]
     [Tooltip("Enter your Groq API Key here for testing")]
     public string apiKey = "";
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+    }
 
     public IEnumerator SendChatRequest(List<GroqMessage> history, System.Action<string> onSuccess, System.Action<string> onError)
     {

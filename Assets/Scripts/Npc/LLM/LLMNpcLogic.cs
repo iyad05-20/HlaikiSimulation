@@ -16,7 +16,6 @@ public class NpcScoringData
 }
 
 // ─── LLMNpcLogic ─────────────────────────────────────────────────────────────
-[RequireComponent(typeof(GroqApiClient))]
 public class LLMNpcLogic : NpcLogic
 {
     [Header("NPC Identity")]
@@ -42,7 +41,6 @@ public class LLMNpcLogic : NpcLogic
     };
     private bool _fragmentAnnounced = false;
 
-    private GroqApiClient     apiClient;
     private List<GroqMessage> chatHistory = new List<GroqMessage>();
     private DialoguePanel     dialoguePanel;
     private string            _lastPlayerMessage = "";
@@ -55,7 +53,6 @@ public class LLMNpcLogic : NpcLogic
     // Instead we use OnEnable() which runs after Awake() and is safe to use alongside.
     private void OnEnable()
     {
-        apiClient = GetComponent<GroqApiClient>();
         LoadPersonaFromJson();
         LoadPreviousSession();
     }
@@ -144,7 +141,7 @@ public class LLMNpcLogic : NpcLogic
         };
         messagesToSend.AddRange(chatHistory);
 
-        StartCoroutine(apiClient.SendChatRequest(messagesToSend, OnLlmSuccess, OnLlmError));
+        StartCoroutine(GroqApiClient.Instance.SendChatRequest(messagesToSend, OnLlmSuccess, OnLlmError));
     }
 
     // ─── BuildSystemPrompt ────────────────────────────────────────────────────
@@ -355,7 +352,7 @@ public class LLMNpcLogic : NpcLogic
         string summary  = null;
         bool   callDone = false;
 
-        StartCoroutine(apiClient.SendChatRequest(msgs,
+        StartCoroutine(GroqApiClient.Instance.SendChatRequest(msgs,
             result => { summary = result; callDone = true; },
             error  => { Debug.LogWarning($"[LLM] Summary generation failed: {error}"); callDone = true; }
         ));
