@@ -62,7 +62,12 @@ public class LLMNpcLogic : NpcLogic
 
     private void LoadPersonaFromJson()
     {
-        string path = Path.Combine(Application.streamingAssetsPath, "personas", $"{npcId}_game.json");
+        string personasDir = Path.Combine(Application.streamingAssetsPath, "personas");
+        string path = Path.Combine(personasDir, $"{npcId}.json");
+
+        if (!File.Exists(path))
+            path = Path.Combine(personasDir, $"{npcId}_game.json");
+
         if (!File.Exists(path))
         {
             Debug.LogError($"[LLMNpcLogic] Persona file not found: {path}");
