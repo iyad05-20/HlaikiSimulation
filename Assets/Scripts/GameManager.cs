@@ -86,6 +86,11 @@ public class GameManager : MonoBehaviour
         get { return _fragments.Count; }
     }
 
+    public static List<string> GetCollectedFragmentsSnapshot()
+    {
+        return new List<string>(_fragments);
+    }
+
     public static void SetCycleVariant(string npcId, int variantId)
     {
         _cycleVariants[npcId] = variantId;
@@ -105,6 +110,8 @@ public class GameManager : MonoBehaviour
             SessionManager.Instance.DeleteAllSessions();
         if (EventTracker.Instance != null)
             EventTracker.Instance.ResetCycle();
+        if (HalkaManager.Instance != null)
+            HalkaManager.Instance.ResetCycle();
 
         _globalReputation = 0;
         _isLoaded = true;
