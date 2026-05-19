@@ -110,8 +110,8 @@ public class GameManager : MonoBehaviour
             SessionManager.Instance.DeleteAllSessions();
         if (EventTracker.Instance != null)
             EventTracker.Instance.ResetCycle();
-        if (HalkaManager.Instance != null)
-            HalkaManager.Instance.ResetCycle();
+        if (HalkaOrchestrator.Instance != null)
+            HalkaOrchestrator.Instance.ResetCycle();
 
         _globalReputation = 0;
         _isLoaded = true;

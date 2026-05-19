@@ -82,6 +82,12 @@ public class InputHandler : MonoBehaviour
         gameInputManager.EnablePlayerMap();
         cameraManager.SwitchToExploration();
         dialoguePanel.HidePanel();
+
+        // Trigger Halka composition if end-of-cycle and fragments collected
+        if (HalkaOrchestrator.Instance != null)
+        {
+            HalkaOrchestrator.Instance.TriggerEndOfCycleHalka();
+        }
     }
 
     // ─── Input ─────────────────────────────────────────────
