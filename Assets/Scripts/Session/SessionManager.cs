@@ -101,4 +101,20 @@ public class SessionManager : MonoBehaviour
             Debug.Log("[SessionManager] All save data deleted (NPCs and Player).");
         }
     }
+
+    public void DeleteSession(string npcId)
+    {
+        string path = Path.Combine(SaveDir, $"{npcId}_session.json");
+        if (File.Exists(path))
+        {
+            File.Delete(path);
+            Debug.Log($"[SessionManager] Session deleted for {npcId}.");
+        }
+    }
+
+    public bool HasSession(string npcId)
+    {
+        string path = Path.Combine(SaveDir, $"{npcId}_session.json");
+        return File.Exists(path);
+    }
 }

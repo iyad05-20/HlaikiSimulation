@@ -121,7 +121,7 @@ public class ScoringTrigger
 {
     public string id;
     public string description;
-    public RangeInt favorability_delta;
+    public IntRange favorability_delta;
     public int reputation_delta;
     public string emotion_pressure;
     public string forces_emotion;
@@ -151,4 +151,11 @@ public class PenaltyPrematureApproach
     public string forces_emotion;
     public string note;
     public string global_effect;
+}
+
+[Serializable]
+public class IntRange
+{
+    public int min;
+    public int max;
 }
