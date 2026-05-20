@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "unityMCP": {
+      "command": "C:/Users/PC SOUFIANE/.local/bin/uvx.exe",
+      "args": [
+        "--from",
+        "mcpforunityserver",
+        "mcp-for-unity",
+        "--transport",
+        "stdio"
+      ]
+    }
+  }
+}

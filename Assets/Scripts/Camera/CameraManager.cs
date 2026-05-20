@@ -1,12 +1,16 @@
 using UnityEngine;
 using Cinemachine;
-
+using UnityEngine.InputSystem;
 
 public class CameraManager : MonoBehaviour
 {
     [Header("Cameras")]
     [SerializeField] private CinemachineVirtualCamera explorationCamera;
     [SerializeField] private CinemachineVirtualCamera dialogueCamera;
+
+    [Header("Orbit Settings")]
+    public float orbitSpeed = 15f;
+    private CinemachineTransposer transposer;
 
     private const int PRIORITY_HIGH = 15;
     private const int PRIORITY_LOW = 5;
@@ -19,6 +23,29 @@ public class CameraManager : MonoBehaviour
     {
         explorationCamera.Priority = PRIORITY_HIGH;
         dialogueCamera.Priority = PRIORITY_LOW;
+
+        if (explorationCamera != null)
+        {
+            transposer = explorationCamera.GetCinemachineComponent<CinemachineTransposer>();
+        }
+    }
+
+    void Update()
+    {
+        // Middle mouse drag to rotate camera around the player
+        if (transposer != null && explorationCamera.Priority == PRIORITY_HIGH)
+        {
+            if (Mouse.current != null && Mouse.current.middleButton.isPressed)
+            {
+                float mouseDeltaX = Mouse.current.delta.x.ReadValue();
+                if (Mathf.Abs(mouseDeltaX) > 0.01f)
+                {
+                    // Rotate the Follow offset vector around the vertical (Y) axis
+                    Quaternion rotation = Quaternion.AngleAxis(mouseDeltaX * orbitSpeed * Time.deltaTime, Vector3.up);
+                    transposer.m_FollowOffset = rotation * transposer.m_FollowOffset;
+                }
+            }
+        }
     }
 
     public void SwitchToDialogue(Transform playerTransform, Transform npcTransform)
