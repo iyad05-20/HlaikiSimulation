@@ -299,9 +299,15 @@ namespace JemaaGame.NPC
                 ? "\n⚠️ Tu dois être conscient que l'audience remarquera la révélation d'une histoire intime. Ajoute de la tension narrative autour de ce moment — des réactions murmurées, de la gêne, ou une réflexion sur la confiance brisée."
                 : "";
 
+            // NOUVEAU Phase 2: Injecter le contexte social du joueur
+            string socialContext = BuildPlayerSocialContext();
+
             return $@"Les fragments suivants ont été rassemblés pour une performance Halka (cercle narratif traditionnel) :
 
 {fragmentsText}
+
+CONTEXTE SOCIAL DU JOUEUR:
+{socialContext}
 
 Audience estimée : {composition.audienceSize} personnes.
 Cohérence globale : {composition.coherenceScore} points.
@@ -310,9 +316,44 @@ Compose une narration vivante, ORALE et PUBLIQUE de ces fragments, comme si le j
 1. Être fluide et naturelle (comme parlée, non écrite)
 2. Créer une continuité entre les fragments
 3. Capturer l'atmosphère des histoires
-4. Rester authentique aux voix et cultures représentées{sensitivityNote}
+4. Rester authentique aux voix et cultures représentées
+5. Refléter la position sociale du joueur dans le réseau social (ses alliances, ses tensions, ce qu'il a appris)
+6. Si le joueur connaît certains des NPCs dans l'audience, leur réaction silencieuse à ce qui est dit peut augmenter la tension{sensitivityNote}
 
 Commence directement par la narration, sans introduction. Utilise des transitions orales (« Et puis... », « C'est là que... », « Voilà ce que... »).";
+        }
+
+        // Phase 2: Build player social context from game state
+        private string BuildPlayerSocialContext()
+        {
+            List<string> npcNames = new List<string>();
+            
+            // Get NPC names from collected fragments
+            List<string> fragmentIds = GameManager.GetCollectedFragmentsSnapshot();
+            foreach (string fragId in fragmentIds)
+            {
+                var frag = ResolveFragment(fragId);
+                if (frag != null && !npcNames.Contains(frag.npcName))
+                {
+                    npcNames.Add(frag.npcName);
+                }
+            }
+
+            string npcMention = npcNames.Count > 0
+                ? $"Ces NPCs sont dans ton réseau social: {string.Join(", ", npcNames)}"
+                : "Tu ne raconte l'histoire de personnes que tu ne connaissais pas intimement.";
+
+            string audienceNpcNote = fragmentIds.Count > 0
+                ? "\nCertains des NPCs dont tu raconte l'histoire peuvent être dans l'audience et reconnaître leur propre histoire."
+                : "";
+
+            return $@"Réputation globale du joueur: {GameManager.GlobalReputation}/100
+{npcMention}{audienceNpcNote}
+
+Personnalise la narration pour montrer:
+- Le point de vue du joueur sur ces histoires (pas juste les révéler, mais montrer qu'il les a comprises)
+- Les tensions sociales s'il y en a (raconter une histoire intime peut changer une relation)
+- La croissance sociale du joueur (il a collecté ces fragments, donc il a su créer de la confiance)";
         }
 
         private string BuildFallbackNarration(CompositionResult composition)

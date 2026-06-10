@@ -123,6 +123,27 @@ public class EventTracker : MonoBehaviour
         Debug.Log("[EventTracker] Cycle reset.");
     }
 
+    // Notifie le EventTracker qu'un fragment a été collecté par le joueur.
+    // Utilisé pour centraliser les réactions gameplay sans dupliquer la logique LLM.
+    public void NotifyFragmentCollected(string npcId, string fragmentId)
+    {
+        Debug.Log($"[EventTracker] Fragment collected: {npcId} / {fragmentId}");
+
+        // Marquer une condition sur le NPC afin que la logique du NPC puisse réagir si besoin.
+        NPCManager.Instance?.SetCondition(npcId, "fragment_collected", true);
+
+        // Si un mapping d'événement explicite 'fragment_collected' existe pour ce NPC, l'appliquer.
+        List<NPCEvent> events;
+        if (_eventMap.TryGetValue(npcId, out events))
+        {
+            NPCEvent evt = events.Find(e => e.EventId == "fragment_collected");
+            if (evt != null)
+            {
+                NPCManager.Instance?.ApplyEvent(npcId, evt.EventId, evt.FavDelta, evt.RepDelta, evt.ForceEmotion);
+            }
+        }
+    }
+
     private class NPCEvent
     {
         public string EventId { get; }
