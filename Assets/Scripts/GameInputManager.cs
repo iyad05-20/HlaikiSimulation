@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using UnityEngine.InputSystem;
 
 public class GameInputManager : MonoBehaviour
 {
@@ -45,6 +46,17 @@ public class GameInputManager : MonoBehaviour
         Vector2 inputVector = inputSystemActions.Player.Move.ReadValue<Vector2>();
         return inputVector;
     }
+
+    public Vector2 LookVector()
+    {
+        return inputSystemActions.Player.Look.ReadValue<Vector2>();
+    }
+
+    public bool IsSprinting()
+    {
+        return inputSystemActions.Player.Sprint.IsPressed();
+    }
+
     // Dans GameInputManager.cs
     public void DisablePlayerMap()
     {

@@ -7,9 +7,29 @@ public class CameraManager : MonoBehaviour
     [Header("Cameras")]
     [SerializeField] private CinemachineVirtualCamera explorationCamera;
     [SerializeField] private CinemachineVirtualCamera dialogueCamera;
+    [SerializeField] private Transform playerTarget;
 
-    [Header("Orbit Settings")]
-    public float orbitSpeed = 15f;
+    [Header("Settings")]
+    [SerializeField] private GameInputManager gameInputManager;
+    public float sensitivity = 0.15f;          // Reduced for finer control
+    public float verticalSensitivity = 0.15f;
+    public float minPitch = -15f;
+    public float maxPitch = 50f;
+    public float distance = 6f;
+    public float heightOffset = 1.6f;
+    
+    [Header("Professional Smoothing")]
+    [Tooltip("The lower the value, the more responsive. 0.05 is standard for pro games.")]
+    public float smoothTime = 0.05f; 
+    
+    private float currentYaw = 0f;
+    private float currentPitch = 20f;
+    private float targetYaw = 0f;
+    private float targetPitch = 20f;
+    
+    private float yawVelocity;
+    private float pitchVelocity;
+    
     private CinemachineTransposer transposer;
 
     private const int PRIORITY_HIGH = 15;
@@ -21,68 +41,116 @@ public class CameraManager : MonoBehaviour
 
     void Start()
     {
-        explorationCamera.Priority = PRIORITY_HIGH;
-        dialogueCamera.Priority = PRIORITY_LOW;
+        // 1. Force Cinemachine Brain to LateUpdate to eliminate "crashes" / jitter
+        var brain = Camera.main.GetComponent<CinemachineBrain>();
+        if (brain != null)
+        {
+            brain.m_UpdateMethod = CinemachineBrain.UpdateMethod.LateUpdate;
+            brain.m_BlendUpdateMethod = CinemachineBrain.BrainUpdateMethod.LateUpdate;
+        }
+
+        // Auto-assign references
+        if (gameInputManager == null) gameInputManager = FindObjectOfType<GameInputManager>();
+        if (playerTarget == null)
+        {
+            PlayerLogic player = FindObjectOfType<PlayerLogic>();
+            if (player != null) playerTarget = player.transform;
+        }
+
+        if (playerTarget != null)
+        {
+            explorationCamera.LookAt = playerTarget;
+            explorationCamera.Follow = playerTarget;
+        }
 
         if (explorationCamera != null)
         {
+            // Ensure Aim component (Composer) exists
+            var composer = explorationCamera.GetCinemachineComponent<CinemachineComposer>();
+            if (composer == null) composer = explorationCamera.AddCinemachineComponent<CinemachineComposer>();
+            
+            // Professional damping values
+            composer.m_HorizontalDamping = 0.1f;
+            composer.m_VerticalDamping = 0.1f;
+
             transposer = explorationCamera.GetCinemachineComponent<CinemachineTransposer>();
+            if (transposer != null)
+            {
+                transposer.m_BindingMode = CinemachineTransposer.BindingMode.WorldSpace;
+                
+                // Zero internal damping to prevent conflicts with our script
+                transposer.m_XDamping = 0;
+                transposer.m_YDamping = 0;
+                transposer.m_ZDamping = 0;
+                
+                Vector3 offset = transposer.m_FollowOffset;
+                targetYaw = currentYaw = Mathf.Atan2(offset.x, offset.z) * Mathf.Rad2Deg;
+                targetPitch = currentPitch = 20f;
+            }
         }
+
+        explorationCamera.Priority = PRIORITY_HIGH;
+        dialogueCamera.Priority = PRIORITY_LOW;
+        LockCursor();
     }
 
     void Update()
     {
-        // Middle mouse drag to rotate camera around the player
-        if (transposer != null && explorationCamera.Priority == PRIORITY_HIGH)
+        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
         {
-            if (Mouse.current != null && Mouse.current.middleButton.isPressed)
-            {
-                float mouseDeltaX = Mouse.current.delta.x.ReadValue();
-                if (Mathf.Abs(mouseDeltaX) > 0.01f)
-                {
-                    // Rotate the Follow offset vector around the vertical (Y) axis
-                    Quaternion rotation = Quaternion.AngleAxis(mouseDeltaX * orbitSpeed * Time.deltaTime, Vector3.up);
-                    transposer.m_FollowOffset = rotation * transposer.m_FollowOffset;
-                }
-            }
+            if (Cursor.lockState == CursorLockMode.Locked) UnlockCursor();
+            else LockCursor();
         }
+    }
+
+    void LateUpdate()
+    {
+        if (transposer != null && explorationCamera.Priority == PRIORITY_HIGH && Cursor.lockState == CursorLockMode.Locked)
+        {
+            Vector2 lookVector = gameInputManager.LookVector();
+            
+            // 1. Accumulate target rotation (Yaw/Pitch)
+            targetYaw += lookVector.x * sensitivity;
+            targetPitch = Mathf.Clamp(targetPitch - lookVector.y * verticalSensitivity, minPitch, maxPitch);
+
+            // 2. Ultra-Smooth interpolation using SmoothDampAngle with unscaledDeltaTime.
+            // unscaledDeltaTime ensures smoothness even during frame-rate spikes or lag.
+            currentYaw = Mathf.SmoothDampAngle(currentYaw, targetYaw, ref yawVelocity, smoothTime, Mathf.Infinity, Time.unscaledDeltaTime);
+            currentPitch = Mathf.SmoothDampAngle(currentPitch, targetPitch, ref pitchVelocity, smoothTime, Mathf.Infinity, Time.unscaledDeltaTime);
+
+            // 3. Calculate stable orbit position
+            Quaternion rotation = Quaternion.Euler(currentPitch, currentYaw, 0f);
+            Vector3 direction = rotation * Vector3.back; 
+            
+            // 4. Apply absolute offset relative to the player
+            transposer.m_FollowOffset = direction * distance + Vector3.up * heightOffset;
+        }
+    }
+
+    private void LockCursor()
+    {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
+    private void UnlockCursor()
+    {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 
     public void SwitchToDialogue(Transform playerTransform, Transform npcTransform)
     {
         explorationCamera.Priority = PRIORITY_LOW;
         dialogueCamera.Priority = PRIORITY_HIGH;
-        
-        /*if (playerTransform != null && npcTransform != null)
-        {
-            // Sauvegarder la position et la rotation initiales avant de modifier
-            if (!isCameraSaved)
-            {
-                originalCameraPosition = dialogueCamera.transform.position;
-                originalCameraRotation = dialogueCamera.transform.rotation;
-                isCameraSaved = true;
-            }
-
-            // Désactiver le suivi automatique de Cinemachine
-            dialogueCamera.Follow = null;
-            dialogueCamera.LookAt = null;
-
-            // Placer la caméra un peu derrière le joueur (et légèrement sur le côté droit pour voir par-dessus l'épaule)
-            Vector3 backOffset = -playerTransform.forward * 2.4f;
-            Vector3 upOffset = Vector3.up * 4.5f;
-            Vector3 rightOffset = playerTransform.right * 2.8f;
-
-            dialogueCamera.transform.position = playerTransform.position + backOffset + upOffset + rightOffset;
-            
-            // Tourner la caméra pour qu'elle regarde le NPC (en ciblant sa tête)
-            dialogueCamera.transform.LookAt(npcTransform.position + Vector3.up * 1.5f);
-        }*/
+        UnlockCursor();
     }
 
     public void SwitchToExploration()
     {
         explorationCamera.Priority = PRIORITY_HIGH;
         dialogueCamera.Priority = PRIORITY_LOW;
+        LockCursor();
 
         // Réinitialiser la caméra à son état d'origine
         if (isCameraSaved)

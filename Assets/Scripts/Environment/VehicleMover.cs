@@ -62,26 +62,4 @@ public class VehicleMover : MonoBehaviour
             }
         }
     }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (waitForPlayerTouch && !isMoving)
-        {
-            if (other.CompareTag("Player"))
-            {
-                isMoving = true;
-            }
-        }
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (waitForPlayerTouch && !isMoving)
-        {
-            if (collision.gameObject.CompareTag("Player"))
-            {
-                isMoving = true;
-            }
-        }
-    }
 }

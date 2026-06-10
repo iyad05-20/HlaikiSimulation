@@ -5,10 +5,11 @@ using UnityEngine;
 public class PlayerLogic : MonoBehaviour
 {
     [SerializeField] private GameInputManager gameInputManager;
-    [SerializeField] private float speed = 5f;
-    [SerializeField] private float rotationSpeed = 10f;
+    [SerializeField] private float speed = 4f;      // Walking speed
+    [SerializeField] private float runSpeed = 10f;  // Running speed (Increased for better feel)
+    [SerializeField] private float rotationSpeed = 15f; // Increased for professional responsiveness
     [SerializeField] private Animator animator;
-    [SerializeField] private float floorOffset = 0f; // Fine-tune this if feet are slightly above/below
+    [SerializeField] private float floorOffset = 0f;
 
     private CharacterController characterController;
     private float velocityY;
@@ -21,12 +22,12 @@ public class PlayerLogic : MonoBehaviour
             characterController = gameObject.AddComponent<CharacterController>();
         }
         
-        // Force human-appropriate proportions to prevent floating on uneven terrain
+        // CharacterController adjustments for stability and to prevent "crashing" (jitter)
         characterController.radius = 0.3f;
-        characterController.height = 2f;
-        // Shift center UP by floorOffset so the visual mesh moves DOWN relative to the collider
-        characterController.center = new Vector3(0, 1f + floorOffset, 0);
-        characterController.skinWidth = 0.01f;
+        characterController.height = 1.8f;
+        characterController.center = new Vector3(0, 0.9f + floorOffset, 0);
+        characterController.skinWidth = 0.08f; // Increased skinWidth helps with stability against walls
+        characterController.stepOffset = 0.3f;
     }
 
     private void Update()
@@ -38,34 +39,56 @@ public class PlayerLogic : MonoBehaviour
     {
         Vector2 inputVector = gameInputManager.InputVector();
         
-        // Calculate horizontal movement
-        Vector3 moveDir = new Vector3(inputVector.x, 0, inputVector.y).normalized;
-        bool isMoving = moveDir != Vector3.zero;
+        // IMPORTANT: Calculate horizontal movement relative to the ACTIVE camera
+        // We use Camera.main but ensure we handle its rotation correctly
+        Transform cameraTransform = Camera.main.transform;
+        Vector3 cameraForward = cameraTransform.forward;
+        Vector3 cameraRight = cameraTransform.right;
+
+        cameraForward.y = 0f;
+        cameraRight.y = 0f;
+        cameraForward.Normalize();
+        cameraRight.Normalize();
+
+        // Direction player wants to move based on WASD + Camera orientation
+        Vector3 moveDir = (cameraForward * inputVector.y + cameraRight * inputVector.x).normalized;
+        bool isMoving = inputVector.sqrMagnitude > 0.01f;
+
+        // Inverted Logic: Run by default, Shift to Walk
+        bool isWalking = isMoving && gameInputManager.IsSprinting(); 
+        bool isRunning = isMoving && !isWalking;
 
         if (animator != null)
         {
-            animator.SetBool("IsWalking", isMoving);
+            animator.SetBool("IsWalking", isWalking);
+            animator.SetBool("IsRunning", isRunning);
+            
+            if (isRunning) animator.speed = 1.2f; 
+            else if (isWalking) animator.speed = 1.0f;
+            else animator.speed = 1.0f;
         }
 
         // 1. Apply gravity
         if (characterController.isGrounded && velocityY < 0)
         {
-            velocityY = -2f; // Small constant downward force to stay grounded on slopes
+            velocityY = -2f; 
         }
 
         velocityY += Physics.gravity.y * Time.deltaTime;
 
-        // Combine horizontal movement and vertical gravity
-        Vector3 velocity = moveDir * speed;
+        // 2. Combine horizontal movement and vertical gravity
+        float currentSpeed = isRunning ? runSpeed : (isWalking ? speed : 0f);
+        Vector3 velocity = (isMoving ? moveDir : Vector3.zero) * currentSpeed;
         velocity.y = velocityY;
 
-        // 2. Move (CharacterController handles wall collisions and grounding)
+        // 3. Move 
         characterController.Move(velocity * Time.deltaTime);
 
-        // 3. Rotate player to move direction
+        // 4. Rotate player to face the direction of movement relative to camera
         if (isMoving)
         {
-            transform.forward = Vector3.Slerp(transform.forward, moveDir, Time.deltaTime * rotationSpeed);
+            Quaternion targetRotation = Quaternion.LookRotation(moveDir);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
         }
     }
 }
