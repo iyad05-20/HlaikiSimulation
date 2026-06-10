@@ -22,8 +22,8 @@ public class HalkaCompositionEngineTests
     [TearDown]
     public void Teardown()
     {
-        if (_engine != null) UnityEngine.Object.Destroy(_engine.gameObject);
-        if (_orchestrator != null) UnityEngine.Object.Destroy(_orchestrator.gameObject);
+        if (_engine != null) UnityEngine.Object.DestroyImmediate(_engine.gameObject);
+        if (_orchestrator != null) UnityEngine.Object.DestroyImmediate(_orchestrator.gameObject);
     }
 
     // ─── TEST 1: Namespace Verification ────────────────────────────────
@@ -182,7 +182,7 @@ public class HalkaIntegrationTests
         var orch = obj.AddComponent<HalkaOrchestrator>();
 
         Assert.That(orch, Is.Not.Null);
-        UnityEngine.Object.Destroy(obj);
+        UnityEngine.Object.DestroyImmediate(obj);
     }
 
     [Test]
@@ -192,6 +192,6 @@ public class HalkaIntegrationTests
         var engine = obj.AddComponent<HalkaCompositionEngine>();
 
         Assert.That(engine, Is.Not.Null);
-        UnityEngine.Object.Destroy(obj);
+        UnityEngine.Object.DestroyImmediate(obj);
     }
 }
