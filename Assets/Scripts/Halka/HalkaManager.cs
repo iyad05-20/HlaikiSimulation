@@ -121,6 +121,11 @@ public class HalkaManager : MonoBehaviour
 
         if (apiClient == null)
         {
+            apiClient = GroqApiClient.Instance;
+        }
+
+        if (apiClient == null)
+        {
             result.narration = BuildFallbackNarration(result);
             OnHalkaCompleted?.Invoke(result);
             if (onComplete != null) onComplete(result);

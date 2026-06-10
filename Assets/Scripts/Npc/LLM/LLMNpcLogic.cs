@@ -175,6 +175,11 @@ public class LLMNpcLogic : NpcLogic
     {
         if (apiClient == null)
         {
+            apiClient = GroqApiClient.Instance;
+        }
+
+        if (apiClient == null)
+        {
             Debug.LogError("[LLMNpcLogic] GroqApiClient not found. Cannot run LLM calls.");
             if (dialoguePanel != null)
                 dialoguePanel.DisplayNPCDialogue("Erreur: service LLM indisponible.");

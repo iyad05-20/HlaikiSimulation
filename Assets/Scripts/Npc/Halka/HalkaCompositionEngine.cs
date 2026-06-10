@@ -238,6 +238,11 @@ namespace JemaaGame.NPC
 
             if (apiClient == null)
             {
+                apiClient = GroqApiClient.Instance;
+            }
+
+            if (apiClient == null)
+            {
                 string fallback = BuildFallbackNarration(composition);
                 onComplete?.Invoke(fallback);
                 yield break;
@@ -264,6 +269,7 @@ namespace JemaaGame.NPC
                 resultText =>
                 {
                     narration = resultText != null ? resultText.Trim() : "";
+                    Debug.Log($"[HalkaCompositionEngine] LLM Narration Result:\n{narration}");
                     done = true;
                 },
                 error =>
