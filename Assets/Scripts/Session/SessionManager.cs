@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Collections.Generic;
 using UnityEngine;
 
 // ─── Session Data ─────────────────────────────────────────────────────────────
@@ -173,7 +172,6 @@ public class SessionManager : MonoBehaviour
             Debug.Log("[SessionManager] All save data deleted (NPCs and Player).");
         }
     }
-<<<<<<< HEAD
 
     public void DeleteSession(string npcId)
     {
@@ -220,6 +218,4 @@ public class SessionManager : MonoBehaviour
         
         return sessions;
     }
-=======
->>>>>>> 9389c8c28ce9240248f2d0d2bfaa19720b4bd850
 }
