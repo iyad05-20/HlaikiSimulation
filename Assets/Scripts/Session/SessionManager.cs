@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Collections.Generic;
 using UnityEngine;
 
 // ─── Session Data ─────────────────────────────────────────────────────────────
@@ -25,6 +26,21 @@ public class PlayerData
 {
     public int globalReputation;
     // Tu pourras ajouter ici : argent, inventaire, position, etc.
+}
+
+[Serializable]
+public class CollectedStory
+{
+    public string id;
+    public string title;
+    public string content;
+    public string dateUnlocked;
+}
+
+[Serializable]
+public class PlayerStoriesData
+{
+    public List<CollectedStory> stories = new List<CollectedStory>();
 }
 
 // ─── SessionManager ───────────────────────────────────────────────────────────
@@ -93,6 +109,56 @@ public class SessionManager : MonoBehaviour
         return JsonUtility.FromJson<PlayerData>(json);
     }
 
+    // ─── Player Stories Save/Load ──────────────────────────────────────────────
+    public void SaveStories(PlayerStoriesData data)
+    {
+        string json = JsonUtility.ToJson(data, true);
+        string path = Path.Combine(SaveDir, "player_stories.json");
+        File.WriteAllText(path, json);
+        Debug.Log("[SessionManager] Player stories saved.");
+    }
+
+    public PlayerStoriesData LoadStories()
+    {
+        string path = Path.Combine(SaveDir, "player_stories.json");
+        if (!File.Exists(path))
+        {
+            Debug.Log("[SessionManager] No player stories found. Returning default.");
+            return new PlayerStoriesData();
+        }
+
+        string json = File.ReadAllText(path);
+        return JsonUtility.FromJson<PlayerStoriesData>(json);
+    }
+
+    public void CaptureStory(string id, string title, string content)
+    {
+        PlayerStoriesData data = LoadStories();
+        
+        // Si l'histoire n'existe pas encore
+        if (!data.stories.Exists(s => s.id == id))
+        {
+            data.stories.Add(new CollectedStory {
+                id = id,
+                title = title,
+                content = content,
+                dateUnlocked = DateTime.UtcNow.ToString("o")
+            });
+            
+            SaveStories(data);
+            
+            // Notification automatique si le système UI est présent
+            if (JemaaGame.UI.NotificationManager.Instance != null)
+            {
+                JemaaGame.UI.NotificationManager.Instance.Show(
+                    "FRAGMENT OBTENU", 
+                    title, 
+                    JemaaGame.UI.NotificationType.Fragment
+                );
+            }
+        }
+    }
+
     // ─── Delete ───────────────────────────────────────────────────────────────
     public void DeleteAllSessions()
     {
@@ -107,6 +173,7 @@ public class SessionManager : MonoBehaviour
             Debug.Log("[SessionManager] All save data deleted (NPCs and Player).");
         }
     }
+<<<<<<< HEAD
 
     public void DeleteSession(string npcId)
     {
@@ -153,4 +220,6 @@ public class SessionManager : MonoBehaviour
         
         return sessions;
     }
+=======
+>>>>>>> 9389c8c28ce9240248f2d0d2bfaa19720b4bd850
 }

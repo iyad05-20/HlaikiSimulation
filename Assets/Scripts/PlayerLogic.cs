@@ -6,6 +6,7 @@ public class PlayerLogic : MonoBehaviour
     [SerializeField] private GameInputManager gameInputManager;
     [SerializeField] private float speed=5f;
     [SerializeField] private float rotationSpeed=10f;
+    [SerializeField] private Animator animator;
 
     
     private void Update()
@@ -18,8 +19,15 @@ public class PlayerLogic : MonoBehaviour
         
         Vector3 moveDir= new Vector3(inputVector.x, 0, inputVector.y).normalized;
 
+        bool isMoving = moveDir != Vector3.zero;
+
+        if (animator != null)
+        {
+            animator.SetBool("IsWalking", isMoving);
+        }
+
         //if no input then exit
-        if (moveDir == Vector3.zero)
+        if (!isMoving)
         {
             return;
         }
