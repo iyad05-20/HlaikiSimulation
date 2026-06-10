@@ -1,9 +1,6 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using NUnit.Framework;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.TestTools;
 using JemaaGame.NPC;
 
 public class HalkaCompositionEngineTests
@@ -25,8 +22,8 @@ public class HalkaCompositionEngineTests
     [TearDown]
     public void Teardown()
     {
-        if (_engine != null) Object.Destroy(_engine.gameObject);
-        if (_orchestrator != null) Object.Destroy(_orchestrator.gameObject);
+        if (_engine != null) UnityEngine.Object.Destroy(_engine.gameObject);
+        if (_orchestrator != null) UnityEngine.Object.Destroy(_orchestrator.gameObject);
     }
 
     // ─── TEST 1: Namespace Verification ────────────────────────────────
@@ -178,27 +175,23 @@ public class HalkaCompositionEngineTests
 
 public class HalkaIntegrationTests
 {
-    [UnityTest]
-    public IEnumerator Test_Orchestrator_Initializes()
+    [Test]
+    public void Test_Orchestrator_Initializes()
     {
         GameObject obj = new GameObject("TestOrc");
         var orch = obj.AddComponent<HalkaOrchestrator>();
 
-        yield return null;
-
         Assert.That(orch, Is.Not.Null);
-        Object.Destroy(obj);
+        UnityEngine.Object.Destroy(obj);
     }
 
-    [UnityTest]
-    public IEnumerator Test_Engine_InitializesWithoutError()
+    [Test]
+    public void Test_Engine_InitializesWithoutError()
     {
         GameObject obj = new GameObject("TestEngine");
         var engine = obj.AddComponent<HalkaCompositionEngine>();
 
-        yield return null;
-
         Assert.That(engine, Is.Not.Null);
-        Object.Destroy(obj);
+        UnityEngine.Object.Destroy(obj);
     }
 }

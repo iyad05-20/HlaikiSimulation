@@ -1,4 +1,5 @@
 using UnityEngine;
+using JemaaGame.NPC;
 using System.Collections.Generic;
 using System.Linq;
 

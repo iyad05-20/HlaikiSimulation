@@ -67,5 +67,6 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "HlaikiPolished.slnx"
+    "dotnet.defaultSolution": "HlaikiPolished.slnx",
+    "dotnet.preferCSharpExtension": true
 }

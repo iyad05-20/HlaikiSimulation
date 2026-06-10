@@ -135,12 +135,11 @@ namespace JemaaGame.NPC
 
             // Generate narration (LLM call)
             string narration = null;
-            bool narrationDone = false;
 
             yield return StartCoroutine(compositionEngine.GenerateNarration(
                 result,
-                text => { narration = text; narrationDone = true; },
-                error => narrationDone = true
+                text => { narration = text; },
+                error => { }
             ));
 
             result.narration = narration ?? BuildFallbackNarration(result);
