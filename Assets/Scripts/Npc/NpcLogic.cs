@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
+using JemaaGame.UI;
 
 public class NpcLogic : MonoBehaviour
 {
@@ -14,7 +15,6 @@ public class NpcLogic : MonoBehaviour
     [Header("UI")]
     [SerializeField] public GameObject myBulleNPC;
     [SerializeField] public TMPro.TextMeshProUGUI myTxtBulleNPC;
-    private GameObject ButtonE;
     private AnchorFollowPlayer anchorFollowPlayer;
 
     protected bool isPlayerInRange = false;
@@ -25,15 +25,9 @@ public class NpcLogic : MonoBehaviour
     private float smoothRotationSpeed = 8f;
 
     // Awake runs before Start for ALL objects, and is NOT hidden by derived classes.
-    // We find all references here (while ButtonE is still active in the scene).
+    // We find all references here.
     private void Awake()
     {
-        ButtonE = GameObject.FindWithTag("ButtonE");
-        if (ButtonE == null)
-        {
-            Debug.LogWarning("[NpcLogic] No object with tag 'ButtonE' found! Make sure it starts ACTIVE in the scene.");
-        }
-
         gameInputManager = FindAnyObjectByType<GameInputManager>();
         inputHandler = FindAnyObjectByType<InputHandler>();
 
@@ -49,15 +43,9 @@ public class NpcLogic : MonoBehaviour
         }
     }
 
-    // Start: subscribe to events and deactivate ButtonE (now that Awake already found it).
+    // Start: subscribe to events.
     private void Start()
     {
-        if (ButtonE != null)
-        {
-            ButtonE.SetActive(false);
-            Debug.Log("[NpcLogic] ButtonE found and deactivated in Start.");
-        }
-
         if (gameInputManager != null)
         {
             gameInputManager.OnInteraction += GameInputManager_OnInteraction;
@@ -75,8 +63,8 @@ public class NpcLogic : MonoBehaviour
     {
         if (isPlayerInRange && !isInteracting)
         {
-            // Hide the "Press E" prompt when interaction starts
-            if (ButtonE != null) ButtonE.SetActive(false);
+            // Hide the interaction popup when interaction starts
+            if (InteractionPopup.Instance != null) InteractionPopup.Instance.Hide();
             StartCoroutine(HandleInteractionSequence());
         }
     }
@@ -145,10 +133,10 @@ public class NpcLogic : MonoBehaviour
             isPlayerInRange = true;
             playerTransform = other.transform;
             Debug.Log($"[NPC] Player in range of {npcName}");
-            if (ButtonE != null)
+            if (InteractionPopup.Instance != null)
             {
-                Debug.Log("[NPCLogic] Showing ButtonE");
-                ButtonE.SetActive(true);
+                Debug.Log("[NPCLogic] Showing InteractionPopup");
+                InteractionPopup.Instance.Show(npcName, npcRole);
             }
         }
     }
@@ -162,9 +150,9 @@ public class NpcLogic : MonoBehaviour
                 playerTransform = null;
             }
             Debug.Log($"[NPC] Player left range of {npcName}");
-            if (ButtonE != null)
+            if (InteractionPopup.Instance != null)
             {
-                ButtonE.SetActive(false);
+                InteractionPopup.Instance.Hide();
             }
 
         }
