@@ -57,6 +57,11 @@ public class GameInputManager : MonoBehaviour
         return inputSystemActions.Player.Sprint.IsPressed();
     }
 
+    public bool WasJumpPressed()
+    {
+        return inputSystemActions.Player.Jump.WasPressedThisFrame();
+    }
+
     // Dans GameInputManager.cs
     public void DisablePlayerMap()
     {
