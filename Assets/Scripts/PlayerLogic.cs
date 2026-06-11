@@ -13,6 +13,10 @@ public class PlayerLogic : MonoBehaviour
     [SerializeField] private Animator animator;
     [SerializeField] private float floorOffset = 0f;
 
+    [Header("Audio Settings")]
+    public AudioClip footstepSound;
+    public AudioSource footstepSource;
+
     private CharacterController characterController;
     private float velocityY;
 
@@ -96,11 +100,49 @@ public class PlayerLogic : MonoBehaviour
 
         characterController.Move(velocity * Time.deltaTime);
 
+        // Handle footsteps logic
+        HandleFootsteps(isWalking, isRunning);
+
         // 4. Rotation
         if (isMoving)
         {
             Quaternion targetRotation = Quaternion.LookRotation(moveDir);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
+        }
+    }
+
+    private void HandleFootsteps(bool isWalking, bool isRunning)
+    {
+        if (footstepSource == null || footstepSound == null) return;
+
+        bool isMovingOnGround = characterController.isGrounded && (isWalking || isRunning);
+
+        if (isMovingOnGround)
+        {
+            // Assign clip and set it to loop if it hasn't been set
+            if (footstepSource.clip != footstepSound)
+            {
+                footstepSource.clip = footstepSound;
+                footstepSource.loop = true;
+            }
+
+            // Start playing one unique sound if it isn't already playing
+            if (!footstepSource.isPlaying)
+            {
+                footstepSource.Play();
+            }
+
+            // Dynamically adjust pitch and volume depending on speed
+            footstepSource.pitch = isRunning ? 1.2f : 1.0f; // Run pitch is higher
+            footstepSource.volume = isRunning ? 0.8f : 0.4f; // Run is louder
+        }
+        else
+        {
+            // Immediately stop the sound when stopped or jumping
+            if (footstepSource.isPlaying)
+            {
+                footstepSource.Stop();
+            }
         }
     }
 }

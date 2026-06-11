@@ -140,6 +140,8 @@ namespace JemaaGame.NPC
         }
 
         // ─── Halka Execution ────────────────────────────────────────────────────
+        public static HalkaCompositionEngine.CompositionResult LastResult { get; private set; }
+
         private IEnumerator ExecuteHalka(List<string> selectedFragmentIds)
         {
             // Score composition (pure local logic)
@@ -155,13 +157,13 @@ namespace JemaaGame.NPC
             ));
 
             result.narration = narration ?? BuildFallbackNarration(result);
+            LastResult = result;
 
             // Broadcast completion
             OnHalkaCompleted?.Invoke(result);
 
-            // Show result panel (optional: can be expanded for NPC reactions)
-            if (_currentPanel != null)
-                _currentPanel.DisplayResult(result);
+            // Charger la scène de fin de cycle (HalkaScene)
+            UnityEngine.SceneManagement.SceneManager.LoadScene("HalkaScene");
 
             _halkaInProgress = false;
         }

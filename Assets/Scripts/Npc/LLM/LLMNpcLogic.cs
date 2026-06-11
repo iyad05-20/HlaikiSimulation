@@ -572,6 +572,17 @@ public class LLMNpcLogic : NpcLogic
 
         // 4. Sauvegarder avec le contexte
         GameManager.AddFragmentWithContext(fragmentId, contextualizedNarration);
+        
+        // NOUVEAU : Sauvegarder dans player_stories.json pour le Menu Codex
+        if (SessionManager.Instance != null && personaData?.story_fragment != null)
+        {
+            SessionManager.Instance.CaptureStory(
+                fragmentId, 
+                personaData.story_fragment.title, 
+                contextualizedNarration
+            );
+        }
+
         OnFragmentCollected?.Invoke(fragmentId);
 
         // Notifier EventTracker pour centraliser les réactions gameplay (Contextual Anchoring aware)
