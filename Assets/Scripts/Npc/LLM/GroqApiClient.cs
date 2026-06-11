@@ -34,22 +34,39 @@ public class GroqResponse
 
 public class GroqApiClient : MonoBehaviour
 {
-    public static GroqApiClient Instance { get; private set; }
+    private static GroqApiClient _instance;
+    public static GroqApiClient Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                _instance = FindObjectOfType<GroqApiClient>();
+            }
+            return _instance;
+        }
+        private set => _instance = value;
+    }
 
     private const string API_URL = "https://api.groq.com/openai/v1/chat/completions";
     
     [Header("API Settings")]
     [Tooltip("Enter your Groq API Key here for testing")]
-    public string apiKey = "";
+    public string apiKey = "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";
 
     private void Awake()
     {
-        if (Instance != null && Instance != this)
+        if (_instance != null && _instance != this)
         {
             Destroy(gameObject);
             return;
         }
-        Instance = this;
+        _instance = this;
+
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            apiKey = "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";
+        }
     }
 
     public IEnumerator SendChatRequest(List<GroqMessage> history, System.Action<string> onSuccess, System.Action<string> onError)
@@ -83,6 +100,7 @@ public class GroqApiClient : MonoBehaviour
             {
                 try
                 {
+                    Debug.Log($"[GroqApiClient] Raw Response: {request.downloadHandler.text}");
                     GroqResponse response = JsonUtility.FromJson<GroqResponse>(request.downloadHandler.text);
                     if (response != null && response.choices != null && response.choices.Count > 0)
                     {

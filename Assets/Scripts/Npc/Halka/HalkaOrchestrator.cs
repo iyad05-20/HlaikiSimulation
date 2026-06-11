@@ -12,7 +12,19 @@ namespace JemaaGame.NPC
     /// </summary>
     public class HalkaOrchestrator : MonoBehaviour
     {
-        public static HalkaOrchestrator Instance { get; private set; }
+        private static HalkaOrchestrator _instance;
+        public static HalkaOrchestrator Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = FindObjectOfType<HalkaOrchestrator>();
+                }
+                return _instance;
+            }
+            private set => _instance = value;
+        }
 
         [SerializeField] private HalkaCompositionEngine compositionEngine;
         [SerializeField] private GameObject halkaCompositionPanelPrefab;
@@ -26,13 +38,13 @@ namespace JemaaGame.NPC
 
         private void Awake()
         {
-            if (Instance != null && Instance != this)
+            if (_instance != null && _instance != this)
             {
                 Destroy(gameObject);
                 return;
             }
 
-            Instance = this;
+            _instance = this;
             DontDestroyOnLoad(gameObject);
         }
 
@@ -135,12 +147,11 @@ namespace JemaaGame.NPC
 
             // Generate narration (LLM call)
             string narration = null;
-            bool narrationDone = false;
 
             yield return StartCoroutine(compositionEngine.GenerateNarration(
                 result,
-                text => { narration = text; narrationDone = true; },
-                error => narrationDone = true
+                text => { narration = text; },
+                error => { }
             ));
 
             result.narration = narration ?? BuildFallbackNarration(result);

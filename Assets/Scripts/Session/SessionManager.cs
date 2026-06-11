@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 // ─── Session Data ─────────────────────────────────────────────────────────────
@@ -13,6 +13,11 @@ public class NPCSessionData
     public string interaction_summary;
     public bool fragment_revealed;
     public string last_updated;
+    
+    // NOUVEAU Phase 3: Contexte social du fragment
+    public string fragment_contextual_presentation = "";  // Présentation LLM personnalisée
+    public int favorability_at_reveal = 0;  // Favorabilité au moment de la révélation
+    public int player_global_reputation_at_reveal = 0;  // Réputation globale à ce moment
 }
 
 [Serializable]
@@ -166,5 +171,51 @@ public class SessionManager : MonoBehaviour
             }
             Debug.Log("[SessionManager] All save data deleted (NPCs and Player).");
         }
+    }
+
+    public void DeleteSession(string npcId)
+    {
+        string path = Path.Combine(SaveDir, $"{npcId}_session.json");
+        if (File.Exists(path))
+        {
+            File.Delete(path);
+            Debug.Log($"[SessionManager] Session deleted for {npcId}.");
+        }
+    }
+
+    public bool HasSession(string npcId)
+    {
+        string path = Path.Combine(SaveDir, $"{npcId}_session.json");
+        return File.Exists(path);
+    }
+
+    // NOUVEAU Phase 1: Récupérer tous les sessions pour contextual anchoring
+    public List<NPCSessionData> GetAllSessions()
+    {
+        List<NPCSessionData> sessions = new List<NPCSessionData>();
+        
+        if (!Directory.Exists(SaveDir))
+            return sessions;
+        
+        string[] files = Directory.GetFiles(SaveDir, "*_session.json");
+        foreach (string file in files)
+        {
+            if (file.EndsWith("player_save.json"))
+                continue;  // Skip player data file
+            
+            try
+            {
+                string json = File.ReadAllText(file);
+                NPCSessionData data = JsonUtility.FromJson<NPCSessionData>(json);
+                if (data != null)
+                    sessions.Add(data);
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"[SessionManager] Failed to load session from {file}: {ex.Message}");
+            }
+        }
+        
+        return sessions;
     }
 }

@@ -16,6 +16,18 @@ public class NpcScoringData
     public string reason;
 }
 
+// ─── Fragment Reveal Context ───────────────────────────────────────────────────
+[System.Serializable]
+public class FragmentRevealContext
+{
+    public int playerFavorabilityWithNpc;
+    public int playerGlobalReputation;
+    public string npcName;
+    public string npcId;
+    public int playerConversationCount;
+    public List<string> otherNpcsEncounteredByPlayer = new List<string>();
+}
+
 // ─── LLMNpcLogic ─────────────────────────────────────────────────────────────
 public class LLMNpcLogic : NpcLogic
 {
@@ -161,6 +173,11 @@ public class LLMNpcLogic : NpcLogic
 
     private IEnumerator DualCallLlmSequence(string playerMessage)
     {
+        if (apiClient == null)
+        {
+            apiClient = GroqApiClient.Instance;
+        }
+
         if (apiClient == null)
         {
             Debug.LogError("[LLMNpcLogic] GroqApiClient not found. Cannot run LLM calls.");
@@ -499,9 +516,150 @@ public class LLMNpcLogic : NpcLogic
 
         _fragmentAnnounced = true;
         string fragmentId = personaData?.story_fragment?.id ?? "unknown_fragment";
-        GameManager.AddFragment(fragmentId);
+        
+        // NOUVEAU: Générer la présentation contextualisée via LLM
+        StartCoroutine(GenerateAndSaveContextualizedFragment(fragmentId));
+    }
+
+    private IEnumerator GenerateAndSaveContextualizedFragment(string fragmentId)
+    {
+        // 1. Construire le contexte social
+        var context = new FragmentRevealContext
+        {
+            playerFavorabilityWithNpc = favorability,
+            playerGlobalReputation = GameManager.GlobalReputation,
+            npcName = npcName,
+            npcId = npcId,
+            playerConversationCount = GetPlayerConversationCount(),
+            otherNpcsEncounteredByPlayer = GetOtherNpcsEncounteredByPlayer()
+        };
+
+        // 2. Appel LLM: "Comment ce NPC raconte son histoire À CE JOUEUR?"
+        string contextualizedNarration = null;
+        bool done = false;
+
+        List<GroqMessage> messages = new List<GroqMessage>
+        {
+            new GroqMessage
+            {
+                role = "system",
+                content = $"Tu es {npcName}, un personnage de jeu vidéo. " +
+                         $"Tu dois présenter une histoire intime au joueur. " +
+                         $"Adapte ton ton et ta façon de la présenter selon votre relation."
+            },
+            new GroqMessage
+            {
+                role = "user",
+                content = BuildFragmentRevealPrompt(fragmentId, context)
+            }
+        };
+
+        StartCoroutine(GroqApiClient.Instance.SendChatRequest(messages,
+            result => { contextualizedNarration = result; done = true; },
+            error => { 
+                Debug.LogWarning($"[LLM Fragment Reveal] Failed: {error}");
+                done = true; 
+            }
+        ));
+
+        yield return new WaitUntil(() => done);
+
+        // 3. Fallback si LLM échoue
+        if (string.IsNullOrEmpty(contextualizedNarration))
+        {
+            contextualizedNarration = BuildFallbackFragmentNarration(fragmentId, context);
+        }
+
+        // 4. Sauvegarder avec le contexte
+        GameManager.AddFragmentWithContext(fragmentId, contextualizedNarration);
         OnFragmentCollected?.Invoke(fragmentId);
-        Debug.Log($"[LLM] Fragment unlocked: {fragmentId}");
+
+        // Notifier EventTracker pour centraliser les réactions gameplay (Contextual Anchoring aware)
+        EventTracker.Instance?.NotifyFragmentCollected(npcId, fragmentId);
+
+        Debug.Log($"[LLM] Fragment collected with context: {fragmentId}");
+    }
+
+    private string BuildFragmentRevealPrompt(string fragmentId, FragmentRevealContext context)
+    {
+        var fragment = personaData?.story_fragment;
+        if (fragment == null)
+            return "Tu dois partager une histoire importante.";
+
+        string relationshipStatus = context.playerFavorabilityWithNpc switch
+        {
+            > 30 => "tu fais confiance à ce joueur",
+            > 10 => "tu trouves ce joueur intéressant",
+            >= 0 => "tu restes neutre",
+            > -10 => "tu es méfiant envers ce joueur",
+            _ => "tu ne fais pas confiance à ce joueur"
+        };
+
+        string otherNpcsMention = context.otherNpcsEncounteredByPlayer.Count > 0
+            ? $"Le joueur connaît aussi: {string.Join(", ", context.otherNpcsEncounteredByPlayer)}"
+            : "Le joueur ne connaît que toi pour l'instant.";
+
+        return $@"CONTEXTE:
+- Relation avec joueur: {relationshipStatus} (favorabilité: {context.playerFavorabilityWithNpc}/100)
+- Réputation globale du joueur: {context.playerGlobalReputation}/100
+- Nombre de conversations avec toi: {context.playerConversationCount}
+- {otherNpcsMention}
+
+HISTOIRE À RACONTER:
+Titre: {fragment.title}
+Contenu: {fragment.content}
+
+INSTRUCTION:
+Tu dois présenter cette histoire en 2-3 phrases. Adapte:
+1. La façon dont tu l'introduis selon la relation
+2. Le niveau de détail que tu révèles
+3. Le ton émotionnel (confiance, méfiance, neutralité)
+
+Exemples par relation:
+- Si favorable (fav > 30): ""Tu sembles comprendre. Voilà ce que peu savent...""
+- Si neutre (fav 0-10): ""Il y a quelque chose que tu devrais savoir...""
+- Si hostile (fav < 0): ""Pourquoi je te raconte ça? Parce que...""
+
+Réponds JUSTE avec la présentation (2-3 phrases), rien d'autre.";
+    }
+
+    private string BuildFallbackFragmentNarration(string fragmentId, FragmentRevealContext context)
+    {
+        var fragment = personaData?.story_fragment;
+        if (fragment == null)
+            return "";
+
+        string intro = context.playerFavorabilityWithNpc > 10
+            ? $"Tu sembles comprendre. Ce que tu dois savoir sur moi..."
+            : $"Il y a quelque chose que tu dois entendre...";
+
+        return $"{intro} {fragment.content}";
+    }
+
+    private int GetPlayerConversationCount()
+    {
+        // Compter les messages assistant (répliques du NPC)
+        int npcMessageCount = chatHistory.FindAll(m => m.role == "assistant").Count;
+        return Mathf.Max(1, npcMessageCount);
+    }
+
+    private List<string> GetOtherNpcsEncounteredByPlayer()
+    {
+        // Query SessionManager pour voir qui d'autre le joueur a rencontré
+        List<string> encountered = new List<string>();
+        
+        if (SessionManager.Instance != null)
+        {
+            // Get all NPC IDs encountered
+            var allSessions = SessionManager.Instance.GetAllSessions();
+            foreach (var session in allSessions)
+            {
+                if (session.npc_id != npcId && !encountered.Contains(session.npc_id))
+                    encountered.Add(session.npc_id);
+            }
+        }
+        
+        return encountered;
     }
 
     // ─── End Conversation (Problem 5) ─────────────────────────────────────────

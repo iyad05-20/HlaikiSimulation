@@ -1,6 +1,11 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Assets/StreamingAssets/personas/hamid.json.meta
 guid: 83a37a15015ba9f43aa05be7e951bcfa
 DefaultImporter:
+========
+guid: 861fee8960be0d646bb9a13c4c6b4bbc
+TextScriptImporter:
+>>>>>>>> llm_implementation:Assets/ScenesAssets/seller.json.meta
   externalObjects: {}
   userData: 
   assetBundleName: 
