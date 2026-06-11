@@ -86,6 +86,16 @@ namespace JemaaGame.NPC
 
             _halkaInProgress = true;
             OnHalkaStartRequested?.Invoke();
+
+            // Si pas de prefab de panel assigné : lancer directement avec tous les fragments
+            if (halkaCompositionPanelPrefab == null)
+            {
+                Debug.Log("[HalkaOrchestrator] No composition panel prefab — running Halka with all fragments.");
+                var allIds = available.ConvertAll(f => f.fragmentId);
+                StartCoroutine(ExecuteHalka(allIds));
+                return;
+            }
+
             ShowCompositionPanel();
         }
 
