@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using JemaaGame.NPC;
 
 public class InputHandler : MonoBehaviour
 {

@@ -53,6 +53,7 @@ public class PlayerLogic : MonoBehaviour
         Vector3 moveDir = (cameraForward * inputVector.y + cameraRight * inputVector.x).normalized;
         bool isMoving = inputVector.sqrMagnitude > 0.01f;
 
+        // By default, moving triggers running. Holding Shift (IsSprinting) triggers walking.
         bool isWalking = isMoving && gameInputManager.IsSprinting(); 
         bool isRunning = isMoving && !isWalking;
 

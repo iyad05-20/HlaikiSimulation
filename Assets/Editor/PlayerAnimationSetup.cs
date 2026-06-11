@@ -4,115 +4,142 @@ using UnityEngine;
 
 public class PlayerAnimationSetup : EditorWindow
 {
-    [MenuItem("Tools/Setup Player Run Animation")]
-    public static void SetupRunAnimation()
+    [MenuItem("Tools/Setup Player Animations")]
+    public static void SetupPlayerAnimations()
     {
-        // 1. Find the Player's Animator Controller
-        Animator playerAnimator = GameObject.FindObjectOfType<PlayerLogic>()?.GetComponent<Animator>();
-        
-        if (playerAnimator == null || playerAnimator.runtimeAnimatorController == null)
+        // 1. Find the Player's Animator in the scene
+        PlayerLogic playerLogic = GameObject.FindObjectOfType<PlayerLogic>();
+        if (playerLogic == null)
         {
-            Debug.LogError("Could not find PlayerLogic with an active Animator in the scene.");
+            Debug.LogError("Could not find a GameObject with PlayerLogic component in the scene.");
             return;
         }
 
+        Animator playerAnimator = playerLogic.GetComponent<Animator>();
+        if (playerAnimator == null)
+        {
+            Debug.LogError("The Player GameObject does not have an Animator component.");
+            return;
+        }
+
+        // 2. Get or Create the Animator Controller
         AnimatorController controller = playerAnimator.runtimeAnimatorController as AnimatorController;
         if (controller == null)
         {
-            Debug.LogError("The Player's RuntimeAnimatorController is not an AnimatorController asset.");
-            return;
+            // If it's empty or not an asset, create a new one
+            string path = "Assets/Animations/PlayerAnimator.controller";
+            controller = AnimatorController.CreateAnimatorControllerAtPath(path);
+            playerAnimator.runtimeAnimatorController = controller;
+            Debug.Log($"Created new Animator Controller at {path}");
         }
 
-        // 2. Add the 'IsRunning' parameter if it doesn't exist
-        bool hasParameter = false;
-        foreach (var param in controller.parameters)
-        {
-            if (param.name == "IsRunning")
-            {
-                hasParameter = true;
-                break;
-            }
-        }
+        // 3. Ensure Parameters exist
+        EnsureParameter(controller, "IsWalking", AnimatorControllerParameterType.Bool);
+        EnsureParameter(controller, "IsRunning", AnimatorControllerParameterType.Bool);
+        EnsureParameter(controller, "IsGrounded", AnimatorControllerParameterType.Bool);
+        EnsureParameter(controller, "Jump", AnimatorControllerParameterType.Trigger);
 
-        if (!hasParameter)
-        {
-            controller.AddParameter("IsRunning", AnimatorControllerParameterType.Bool);
-            Debug.Log("Added 'IsRunning' parameter to the Animator Controller.");
-        }
+        // 4. Load Animation Clips
+        AnimationClip idleClip = AssetDatabase.LoadAssetAtPath<AnimationClip>("Assets/Animations/Breathingidle.anim");
+        AnimationClip walkClip = AssetDatabase.LoadAssetAtPath<AnimationClip>("Assets/Animations/walk.anim");
+        AnimationClip runClip = AssetDatabase.LoadAssetAtPath<AnimationClip>("Assets/Animations/Run.anim");
 
-        // 3. Find the run animation clip
-        AnimationClip runClip = AssetDatabase.LoadAssetAtPath<AnimationClip>("Assets/Animations/run60fram.fbx");
-        if (runClip == null)
-        {
-            // The fbx itself might contain multiple clips. Let's try loading all sub-assets.
-            Object[] assets = AssetDatabase.LoadAllAssetsAtPath("Assets/Animations/run60fram.fbx");
-            foreach (var asset in assets)
-            {
-                if (asset is AnimationClip && !asset.name.StartsWith("__preview__"))
-                {
-                    runClip = asset as AnimationClip;
-                    break;
-                }
-            }
-            
-            if (runClip == null)
-            {
-                Debug.LogError("Could not find the 'run60fram.fbx' animation clip at Assets/Animations/run60fram.fbx");
-                return;
-            }
-        }
+        if (idleClip == null) Debug.LogWarning("Missing Assets/Animations/Breathingidle.anim");
+        if (walkClip == null) Debug.LogWarning("Missing Assets/Animations/walk.anim");
+        if (runClip == null) Debug.LogWarning("Missing Assets/Animations/Run.anim");
 
-        // 4. Get the Base Layer
+        // 5. Setup State Machine
         AnimatorStateMachine rootStateMachine = controller.layers[0].stateMachine;
-
-        // 5. Check if "Run" state already exists, if not create it
-        AnimatorState runState = null;
-        AnimatorState idleWalkState = null; // Assuming we transition from AnyState or an existing Walk state
         
-        foreach (var state in rootStateMachine.states)
-        {
-            if (state.state.name == "Run" || state.state.name == "Running")
-            {
-                runState = state.state;
-            }
-            // Just picking the default state or the first state to transition FROM
-            if (state.state == rootStateMachine.defaultState)
-            {
-                idleWalkState = state.state;
-            }
-        }
+        // Clear existing states to avoid mess (Optional, but cleaner for "returning" to a known state)
+        // rootStateMachine.states = new ChildAnimatorState[0]; 
 
-        if (runState == null)
-        {
-            runState = rootStateMachine.AddState("Run");
-            runState.motion = runClip;
-            Debug.Log("Added 'Run' state to the Animator Controller.");
-            
-            // Set up transitions from Any State to Run
-            AnimatorStateTransition toRun = rootStateMachine.AddAnyStateTransition(runState);
-            toRun.AddCondition(AnimatorConditionMode.If, 0, "IsRunning");
-            toRun.duration = 0.1f;
-            toRun.hasExitTime = false;
-            
-            // Transition back to Idle/Walk (Default State) when not running
-            if (idleWalkState != null)
-            {
-                AnimatorStateTransition toIdleWalk = runState.AddTransition(idleWalkState);
-                toIdleWalk.AddCondition(AnimatorConditionMode.IfNot, 0, "IsRunning");
-                toIdleWalk.duration = 0.1f;
-                toIdleWalk.hasExitTime = false;
-            }
-        }
-        else
-        {
-            // Make sure it has the right motion
-            runState.motion = runClip;
-            Debug.Log("Updated existing 'Run' state with the new clip.");
-        }
+        AnimatorState idleState = GetOrCreateState(rootStateMachine, "Idle", idleClip);
+        AnimatorState walkState = GetOrCreateState(rootStateMachine, "Walk", walkClip);
+        AnimatorState runState = GetOrCreateState(rootStateMachine, "Run", runClip);
+
+        rootStateMachine.defaultState = idleState;
+
+        // 6. Setup Transitions
+        
+        // Idle -> Walk
+        AddTransitionIfMissing(idleState, walkState, new (string, AnimatorConditionMode, float)[] { 
+            ("IsWalking", AnimatorConditionMode.If, 0),
+            ("IsRunning", AnimatorConditionMode.IfNot, 0)
+        });
+
+        // Idle -> Run
+        AddTransitionIfMissing(idleState, runState, new (string, AnimatorConditionMode, float)[] { 
+            ("IsRunning", AnimatorConditionMode.If, 0)
+        });
+
+        // Walk -> Idle
+        AddTransitionIfMissing(walkState, idleState, new (string, AnimatorConditionMode, float)[] { 
+            ("IsWalking", AnimatorConditionMode.IfNot, 0),
+            ("IsRunning", AnimatorConditionMode.IfNot, 0)
+        });
+
+        // Walk -> Run
+        AddTransitionIfMissing(walkState, runState, new (string, AnimatorConditionMode, float)[] { 
+            ("IsRunning", AnimatorConditionMode.If, 0)
+        });
+
+        // Run -> Idle
+        AddTransitionIfMissing(runState, idleState, new (string, AnimatorConditionMode, float)[] { 
+            ("IsRunning", AnimatorConditionMode.IfNot, 0),
+            ("IsWalking", AnimatorConditionMode.IfNot, 0)
+        });
+
+        // Run -> Walk
+        AddTransitionIfMissing(runState, walkState, new (string, AnimatorConditionMode, float)[] { 
+            ("IsRunning", AnimatorConditionMode.IfNot, 0),
+            ("IsWalking", AnimatorConditionMode.If, 0)
+        });
 
         EditorUtility.SetDirty(controller);
         AssetDatabase.SaveAssets();
 
-        Debug.Log("<color=green><b>Success!</b></color> Player run animation setup is complete. You can now test it in Play Mode.");
+        Debug.Log("<color=green><b>Success!</b></color> Player animations have been restored and configured. Check 'PlayerAnimator.controller'.");
+    }
+
+    private static void EnsureParameter(AnimatorController controller, string name, AnimatorControllerParameterType type)
+    {
+        foreach (var param in controller.parameters)
+        {
+            if (param.name == name) return;
+        }
+        controller.AddParameter(name, type);
+    }
+
+    private static AnimatorState GetOrCreateState(AnimatorStateMachine stateMachine, string name, AnimationClip clip)
+    {
+        foreach (var childState in stateMachine.states)
+        {
+            if (childState.state.name == name)
+            {
+                childState.state.motion = clip;
+                return childState.state;
+            }
+        }
+        AnimatorState state = stateMachine.AddState(name);
+        state.motion = clip;
+        return state;
+    }
+
+    private static void AddTransitionIfMissing(AnimatorState from, AnimatorState to, (string name, AnimatorConditionMode mode, float threshold)[] conditions)
+    {
+        foreach (var trans in from.transitions)
+        {
+            if (trans.destinationState == to) return;
+        }
+
+        AnimatorStateTransition transition = from.AddTransition(to);
+        transition.hasExitTime = false;
+        transition.duration = 0.15f;
+        
+        foreach (var cond in conditions)
+        {
+            transition.AddCondition(cond.mode, cond.threshold, cond.name);
+        }
     }
 }
