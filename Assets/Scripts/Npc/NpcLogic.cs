@@ -161,6 +161,16 @@ public class NpcLogic : MonoBehaviour
     protected virtual void Interact()
     {
         Debug.Log($"[NPC] Interacting with {npcName} (role; {npcRole})");
+        
+        if (JemaaGame.UI.NotificationManager.Instance != null)
+        {
+            JemaaGame.UI.NotificationManager.Instance.Show(
+                "INTERACTION", 
+                "Interaction initiée avec un habitant de la place.", 
+                JemaaGame.UI.NotificationType.System
+            );
+        }
+
         if (inputHandler != null)
         {
             inputHandler.StartConversation(this);
