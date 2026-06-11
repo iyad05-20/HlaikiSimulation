@@ -254,13 +254,25 @@ public class LLMNpcLogic : NpcLogic
         if (personaData == null || string.IsNullOrEmpty(personaData.scoring_prompt_template))
             return $"Évalue ce message: \"{playerMessage}\" État: {currentEmotion}, Fav: {favorability}";
 
-        return personaData.scoring_prompt_template
+        string prompt = personaData.scoring_prompt_template
             .Replace("{player_input}", playerMessage)
             .Replace("{emotion}", currentEmotion)
             .Replace("{favorability}", favorability.ToString())
             .Replace("{reputation}", reputation.ToString())
             .Replace("{curiosity_shown}", conditions["curiosity_shown"].ToString().ToLower())
             .Replace("{mood}", currentMood);
+
+        // NOUVEAU : Le template JSON des personas oubliait de demander "curiosity_triggered"
+        // On l'injecte de force dans le schéma JSON attendu pour réparer la récolte de fragments
+        if (!prompt.Contains("curiosity_triggered"))
+        {
+            prompt = prompt.Replace(
+                "\"reason\": \"<3 mots max>\"", 
+                "\"reason\": \"<3 mots max>\",\n  \"curiosity_triggered\": <true si le joueur pose une question sincère sur le passé, le métier ou le secret du NPC, false sinon>"
+            );
+        }
+
+        return prompt;
     }
 
     private string BuildDialoguePrompt()
@@ -423,7 +435,7 @@ public class LLMNpcLogic : NpcLogic
             conditions["curiosity_shown"] = true;
 
         // 4 — Fragment unlock condition
-        if (conditions["curiosity_shown"] && favorability >= 60)
+        if (conditions["curiosity_shown"] && favorability >=7)
             conditions["fragment_revealed"] = true;
 
         // 5 — Emotion transition
