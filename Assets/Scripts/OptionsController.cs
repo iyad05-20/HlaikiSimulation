@@ -46,4 +46,22 @@ public class OptionsController : MonoBehaviour
         // On utilise la navigation centralisée
         MenuNavigation.CloseOptions();
     }
+
+    public void OnMainMenu()
+    {
+        // On sauvegarde avant de quitter
+        PlayerPrefs.Save();
+        
+        // On charge le menu principal
+        MenuNavigation.GoToMainMenu();
+    }
+
+    public void OnStoryCollector()
+    {
+        // 1. Charger le Story Collector
+        MenuNavigation.OpenStoryCollector();
+        
+        // 2. Décharger le menu Options
+        MenuNavigation.CloseOptions();
+    }
 }

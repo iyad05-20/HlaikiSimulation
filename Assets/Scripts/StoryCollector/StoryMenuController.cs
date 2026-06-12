@@ -9,10 +9,12 @@ namespace JemaaGame.UI
     public class StoryMenuController : MonoBehaviour
     {
         [Header("UI Elements")]
-        [Tooltip("The Content transform of your Scroll View")]
+        [Tooltip("The Content transform of your Scroll View (la liste à droite)")]
         [SerializeField] private RectTransform listContainer;
-        [Tooltip("A Prefab containing two TMP_Text children named 'TitleText' and 'ContentText'")]
+        [Tooltip("Le prefab de ton bouton (qui contient un TextMeshPro pour le titre)")]
         [SerializeField] private GameObject storyItemPrefab;
+        [Tooltip("The Text UI element that will display the selected story's content (le grand parchemin)")]
+        [SerializeField] private TMP_Text storyContentText;
         
         private PlayerStoriesData currentData;
 
@@ -22,6 +24,7 @@ namespace JemaaGame.UI
 
             if (listContainer == null) Debug.LogError("[StoryMenuController] ERREUR : listContainer n'est pas assigné dans l'inspecteur !");
             if (storyItemPrefab == null) Debug.LogError("[StoryMenuController] ERREUR : storyItemPrefab n'est pas assigné dans l'inspecteur !");
+            if (storyContentText == null) Debug.LogError("[StoryMenuController] ERREUR : storyContentText n'est pas assigné dans l'inspecteur !");
 
             // 1. Charger les histoires sauvegardées
             if (SessionManager.Instance != null)
@@ -51,32 +54,55 @@ namespace JemaaGame.UI
 
         private void PopulateList()
         {
+            // Vider le conteneur existant au cas où
+            foreach (Transform child in listContainer)
+            {
+                Destroy(child.gameObject);
+            }
+
             if (currentData == null || currentData.stories.Count == 0) 
             {
-                Debug.LogWarning("[StoryMenuController] Aucune histoire à afficher (currentData est null ou vide).");
+                Debug.LogWarning("[StoryMenuController] Aucune histoire à afficher.");
+                storyContentText.text = "Vous n'avez pas encore collecté d'histoires...";
                 return;
             }
 
-            Debug.Log($"[StoryMenuController] Début de l'instanciation de {currentData.stories.Count} prefabs...");
-
-            foreach (var story in currentData.stories)
+            for (int i = 0; i < currentData.stories.Count; i++)
             {
-                if (storyItemPrefab == null || listContainer == null) return; // Sécurité
+                var story = currentData.stories[i];
+                if (storyItemPrefab == null || listContainer == null) return;
 
+                // Instancier le prefab
                 GameObject itemObj = Instantiate(storyItemPrefab, listContainer);
-                Debug.Log($"[StoryMenuController] Instancié le prefab pour l'histoire : {story.title}");
                 
-                // Utiliser le nouveau composant pour injecter le texte
+                // Mettre le texte (seulement le titre)
                 StoryItemUI itemUI = itemObj.GetComponent<StoryItemUI>();
                 if (itemUI != null)
                 {
-                    itemUI.SetStory(story.title, story.content);
-                    Debug.Log($"[StoryMenuController] Texte injecté avec succès via StoryItemUI pour : {story.title}");
+                    itemUI.SetTitle(story.title); 
                 }
-                else
+
+                // S'assurer qu'il y a un composant Button et lui ajouter un événement de clic
+                Button btn = itemObj.GetComponent<Button>();
+                if (btn == null) 
                 {
-                    Debug.LogError("[StoryMenuController] ERREUR : Le prefab 'storyItemPrefab' n'a pas le composant 'StoryItemUI' attaché !");
+                    btn = itemObj.AddComponent<Button>();
                 }
+                
+                int index = i; // Obligatoire pour la closure dans la boucle
+                btn.onClick.AddListener(() => OnStorySelected(index));
+            }
+
+            // Afficher manuellement le contenu de la première histoire au démarrage
+            OnStorySelected(0);
+        }
+
+        public void OnStorySelected(int index)
+        {
+            if (currentData != null && index >= 0 && index < currentData.stories.Count)
+            {
+                // Mettre à jour le texte du parchemin avec le contenu complet de l'histoire
+                storyContentText.text = currentData.stories[index].content;
             }
         }
 
@@ -85,7 +111,16 @@ namespace JemaaGame.UI
             SceneManager.UnloadSceneAsync("StoryCollectorMenu");
             
             // Si vous avez mis le jeu en pause (Time.timeScale = 0), pensez à le remettre à 1 ici
-            // Time.timeScale = 1f;
+            Time.timeScale = 1f;
+        }
+
+        public void OnMainMenu()
+        {
+            // On charge le menu principal via notre script centralisé
+            MenuNavigation.GoToMainMenu();
+            
+            // On s'assure que le temps reprend si le jeu était en pause
+            Time.timeScale = 1f;
         }
     }
 }

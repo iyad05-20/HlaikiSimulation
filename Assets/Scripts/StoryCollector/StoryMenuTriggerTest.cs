@@ -45,6 +45,27 @@ namespace JemaaGame.UI
                     Debug.LogWarning("[StoryMenuTriggerTest] SessionManager introuvable dans la scène !");
                 }
             }
+
+            // 3. Simuler la capture de plusieurs histoires pour tester le scroll (touche F11)
+            if (Keyboard.current.f11Key.wasPressedThisFrame)
+            {
+                if (SessionManager.Instance != null)
+                {
+                    Debug.Log("[StoryMenuTriggerTest] Génération de 10 histoires factices pour tester le scroll...");
+                    for (int i = 1; i <= 10; i++)
+                    {
+                        SessionManager.Instance.CaptureStory(
+                            "fake_test_batch_" + Random.Range(10000, 99999), 
+                            "Légende Numéro " + Random.Range(1, 999), 
+                            "Ceci est le contenu de la légende numéro " + i + ". Une histoire fascinante sur les dunes du désert et les secrets enfouis sous le sable. Ajoutez encore plus de texte pour voir comment le parchemin se comporte avec de longs paragraphes !"
+                        );
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("[StoryMenuTriggerTest] SessionManager introuvable dans la scène !");
+                }
+            }
         }
 
         private bool IsSceneLoaded(string sceneName)

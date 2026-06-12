@@ -7,17 +7,11 @@ namespace JemaaGame.UI
     {
         [Tooltip("Glissez ici le TextMeshPro du Titre")]
         public TextMeshProUGUI titleText;
-        
-        [Tooltip("Glissez ici le TextMeshPro du Contenu")]
-        public TextMeshProUGUI contentText;
 
-        public void SetStory(string title, string content)
+        public void SetTitle(string title)
         {
             if (titleText != null) titleText.text = title;
             else Debug.LogWarning("[StoryItemUI] titleText n'est pas assigné !");
-
-            if (contentText != null) contentText.text = content;
-            else Debug.LogWarning("[StoryItemUI] contentText n'est pas assigné !");
         }
     }
 }
