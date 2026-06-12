@@ -123,7 +123,23 @@ namespace JemaaGame.NPC
         // ─── Query Available Fragments ──────────────────────────────────────────
         public List<FragmentEntry> GetAvailableFragments()
         {
-            List<string> collected = GameManager.GetCollectedFragmentsSnapshot();
+            List<string> collected = new List<string>();
+            
+            // On vérifie d'abord la sauvegarde persistante (Codex)
+            if (SessionManager.Instance != null)
+            {
+                var data = SessionManager.Instance.LoadStories();
+                if (data != null && data.stories != null)
+                {
+                    collected = data.stories.ConvertAll(s => s.id);
+                }
+            }
+            else
+            {
+                // Fallback sur la mémoire volatile de la session
+                collected = GameManager.GetCollectedFragmentsSnapshot();
+            }
+
             return _catalog.Where(fragment => collected.Contains(fragment.fragmentId)).ToList();
         }
 

@@ -32535,6 +32535,51 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 1316299737}
   m_SourcePrefab: {fileID: -5645937942226959685, guid: d8bee0f77db6f564ca5e6bdfd3625d32, type: 3}
+--- !u!1 &1612964842
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1612964844}
+  - component: {fileID: 1612964843}
+  m_Layer: 0
+  m_Name: 'StoryMenuManager '
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1612964843
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1612964842}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8cfbae00eaf948e4a84b629aef74687b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::JemaaGame.UI.StoryMenuTriggerTest
+  storyMenuSceneName: StoryCollectorMenu
+--- !u!4 &1612964844
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1612964842}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 213.89565, y: 2.39388, z: -77.63081}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1618405363
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -38539,6 +38584,83 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -3910990755373119420, guid: 70aaf8f3ead3e29499832547a7c9176c, type: 3}
   m_PrefabInstance: {fileID: 1575515417}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1869851581
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1869851583}
+  - component: {fileID: 1869851582}
+  - component: {fileID: 1869851585}
+  - component: {fileID: 1869851584}
+  m_Layer: 0
+  m_Name: 'HalkaSystem '
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1869851582
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1869851581}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9ea812e7e1fa7f49b302cc2a384f68e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::JemaaGame.NPC.HalkaCompositionEngine
+  baseAudience: 3
+  reputationAudienceStep: 10
+  moussaAudienceMultiplier: 1.35
+  youssefAudienceBonus: 3
+  omarAudienceBonus: 5
+--- !u!4 &1869851583
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1869851581}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 213.89565, y: 2.39388, z: -77.63081}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1869851584
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1869851581}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e8a42ba344747646bc43661f39e0cc7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::JemaaGame.UI.EndOfCycleTrigger
+--- !u!114 &1869851585
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1869851581}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 010cb61a6102c464dbff64c2eadf252a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::JemaaGame.NPC.HalkaOrchestrator
+  compositionEngine: {fileID: 0}
+  halkaCompositionPanelPrefab: {fileID: 0}
 --- !u!1001 &1870338185
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -42756,3 +42878,5 @@ SceneRoots:
   - {fileID: 1287209384}
   - {fileID: 1575515417}
   - {fileID: 1760768343}
+  - {fileID: 1869851583}
+  - {fileID: 1612964844}

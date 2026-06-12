@@ -10,10 +10,12 @@ namespace JemaaGame.UI
         {
             if (Keyboard.current == null) return;
 
-            // Déclencher la fin du cycle avec la touche "=" (ou Key.Equals)
-            if (Keyboard.current.equalsKey.wasPressedThisFrame)
+            // Déclencher la fin du cycle avec "=", "F8" ou "Entrée" (pour éviter les bugs de clavier AZERTY)
+            if (Keyboard.current.equalsKey.wasPressedThisFrame || 
+                Keyboard.current.f8Key.wasPressedThisFrame || 
+                Keyboard.current.enterKey.wasPressedThisFrame)
             {
-                Debug.Log("[EndOfCycleTrigger] Touche '=' pressée : Déclenchement de la fin du cycle !");
+                Debug.Log("[EndOfCycleTrigger] Touche pressée : Déclenchement de la fin du cycle !");
                 if (HalkaOrchestrator.Instance != null)
                 {
                     HalkaOrchestrator.Instance.TriggerEndOfCycleHalka();
