@@ -24,6 +24,27 @@ public static class MenuNavigation
         }
     }
 
+    public static void OpenStoryCollector()
+    {
+        string storyScene = "StoryCollectorMenu";
+        if (!IsSceneLoaded(storyScene))
+        {
+            SceneManager.LoadScene(storyScene, LoadSceneMode.Additive);
+            Debug.Log("[MenuNavigation] Loading Story Collector additively.");
+        }
+        else
+        {
+            Debug.Log("[MenuNavigation] Story Collector is already open.");
+        }
+    }
+
+    public static void GoToMainMenu()
+    {
+        // LoadSceneMode.Single est le comportement par défaut, ça décharge toutes les autres scènes
+        SceneManager.LoadScene("MainMenu", LoadSceneMode.Single);
+        Debug.Log("[MenuNavigation] Loading Main Menu and unloading everything else.");
+    }
+
     public static void CloseOptions()
     {
         if (IsSceneLoaded(OptionsSceneName))
