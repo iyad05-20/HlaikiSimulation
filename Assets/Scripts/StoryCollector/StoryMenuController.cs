@@ -60,6 +60,29 @@ namespace JemaaGame.UI
                 Destroy(child.gameObject);
             }
 
+            // --- MOCK DATA FORCE ---
+            // On ignore temporairement les données sauvegardées pour forcer l'affichage des 3 vraies histoires
+            currentData = new PlayerStoriesData();
+            currentData.stories.Add(new CollectedStory {
+                id = "test_1",
+                title = "Le Charmeur de Serpents",
+                content = "La place Jemaa el-Fna est réputée pour ses charmeurs de serpents. Au son de la ghaita (une sorte de flûte), les cobras et couleuvres semblent danser. C'est en fait le mouvement de l'instrument et les vibrations du sol qui captivent l'animal, plus que la musique elle-même. Cette tradition ancestrale fascine les visiteurs depuis des siècles.",
+                dateUnlocked = System.DateTime.UtcNow.ToString("o")
+            });
+            currentData.stories.Add(new CollectedStory {
+                id = "test_2",
+                title = "Le Conteur de Légendes",
+                content = "Au crépuscule, la place se transforme. Les halqa (cercles de spectateurs) se forment autour des conteurs (hlaiqis). Ils racontent des épopées, des fables morales et des légendes anciennes. Leur art oratoire, souvent accompagné de gestes théâtraux, est un pilier du patrimoine oral marocain, transmis de génération en génération.",
+                dateUnlocked = System.DateTime.UtcNow.ToString("o")
+            });
+            currentData.stories.Add(new CollectedStory {
+                id = "test_3",
+                title = "L'Eau et les Porteurs d'Eau",
+                content = "Autrefois essentiels pour la survie sous le soleil de Marrakech, les porteurs d'eau (Guerrab) parcourent la place avec leurs costumes colorés, leurs chapeaux à franges et leurs clochettes en cuivre. Bien qu'aujourd'hui leur rôle soit plus folklorique, ils rappellent l'importance vitale de l'eau dans cette région désertique.",
+                dateUnlocked = System.DateTime.UtcNow.ToString("o")
+            });
+            // ------------------------
+
             if (currentData == null || currentData.stories.Count == 0) 
             {
                 Debug.LogWarning("[StoryMenuController] Aucune histoire à afficher.");
