@@ -22,6 +22,10 @@ namespace JemaaGame.UI
         {
             Debug.Log("[StoryMenuController] Start() a été appelé !");
 
+            // Déverrouiller et afficher le curseur pour pouvoir interagir avec l'UI du codex
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+
             if (listContainer == null) Debug.LogError("[StoryMenuController] ERREUR : listContainer n'est pas assigné dans l'inspecteur !");
             if (storyItemPrefab == null) Debug.LogError("[StoryMenuController] ERREUR : storyItemPrefab n'est pas assigné dans l'inspecteur !");
             if (storyContentText == null) Debug.LogError("[StoryMenuController] ERREUR : storyContentText n'est pas assigné dans l'inspecteur !");
@@ -135,6 +139,10 @@ namespace JemaaGame.UI
             
             // Si vous avez mis le jeu en pause (Time.timeScale = 0), pensez à le remettre à 1 ici
             Time.timeScale = 1f;
+
+            // Re-verrouiller le curseur pour le gameplay d'exploration
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
         }
 
         public void OnMainMenu()

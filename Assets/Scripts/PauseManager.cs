@@ -65,6 +65,10 @@ public class PauseManager : MonoBehaviour
         if (pausePostProcessVolume != null)
             pausePostProcessVolume.gameObject.SetActive(true);
 
+        // Déverrouiller et afficher le curseur pour pouvoir interagir avec le menu d'options
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         // On ne désactive plus la map entière car on a besoin de la touche Options (ESC) pour Resume !
         // Plus tard, on pourra désactiver seulement le mouvement dans PlayerLogic si besoin.
 
@@ -83,6 +87,10 @@ public class PauseManager : MonoBehaviour
 
         // On s'assure que le menu est fermé (cas où on fait Resume via ESC)
         MenuNavigation.CloseOptions();
+
+        // Verrouiller à nouveau le curseur au centre de l'écran pour le gameplay d'exploration
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
         
         Debug.Log($"[PauseManager] Game Resumed, isPaused: {isPaused}");
     }
