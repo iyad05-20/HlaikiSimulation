@@ -12,6 +12,9 @@ public class OptionsController : MonoBehaviour
 
     private void Start()
     {
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+
         // 1. Charger les réglages sauvegardés (ou mettre des valeurs par défaut)
         if (volumeSlider != null)
         {
