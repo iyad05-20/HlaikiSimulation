@@ -451,8 +451,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::JemaaGame.UI.HalkaResultDisplay
   gradeText: {fileID: 1497203453}
-  totalScoreText: {fileID: 0}
-  detailsText: {fileID: 935190720}
+  totalScoreText: {fileID: 935190720}
+  detailsText: {fileID: 0}
   narrationText: {fileID: 270920797}
   narrationScrollRect: {fileID: 1663480608}
   reactionText: {fileID: 0}
