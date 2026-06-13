@@ -12,6 +12,9 @@ public class OptionsController : MonoBehaviour
 
     private void Start()
     {
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+
         // 1. Charger les réglages sauvegardés (ou mettre des valeurs par défaut)
         if (volumeSlider != null)
         {
@@ -44,6 +47,24 @@ public class OptionsController : MonoBehaviour
         PlayerPrefs.Save();
         
         // On utilise la navigation centralisée
+        MenuNavigation.CloseOptions();
+    }
+
+    public void OnMainMenu()
+    {
+        // On sauvegarde avant de quitter
+        PlayerPrefs.Save();
+        
+        // On charge le menu principal
+        MenuNavigation.GoToMainMenu();
+    }
+
+    public void OnStoryCollector()
+    {
+        // 1. Charger le Story Collector
+        MenuNavigation.OpenStoryCollector();
+        
+        // 2. Décharger le menu Options
         MenuNavigation.CloseOptions();
     }
 }

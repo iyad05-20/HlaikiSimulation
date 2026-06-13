@@ -1,80 +1,148 @@
 using Unity.VisualScripting;
 using UnityEngine;
 
+[RequireComponent(typeof(CharacterController))]
 public class PlayerLogic : MonoBehaviour
 {
     [SerializeField] private GameInputManager gameInputManager;
-    [SerializeField] private float speed=5f;
-    [SerializeField] private float rotationSpeed=10f;
+    [SerializeField] private float speed = 4f;      // Walking speed
+    [SerializeField] private float runSpeed = 10f;  // Running speed
+    [SerializeField] private float rotationSpeed = 15f; 
+    [SerializeField] private float jumpHeight = 1.5f; // New Jump Height
+    [SerializeField] private float gravityScale = 1.5f; // For a better feeling fall
     [SerializeField] private Animator animator;
+    [SerializeField] private float floorOffset = 0f;
 
-    
+    [Header("Audio Settings")]
+    public AudioClip footstepSound;
+    public AudioSource footstepSource;
+
+    private CharacterController characterController;
+    private float velocityY;
+
+    private void Awake()
+    {
+        // ... (existing CharacterController setup)
+        characterController = GetComponent<CharacterController>();
+        if (characterController == null)
+        {
+            characterController = gameObject.AddComponent<CharacterController>();
+        }
+        
+        characterController.radius = 0.3f;
+        characterController.height = 1.8f;
+        characterController.center = new Vector3(0, 0.9f + floorOffset, 0);
+        characterController.skinWidth = 0.08f; 
+        characterController.stepOffset = 0.3f;
+    }
+
     private void Update()
     {
         HandleMovement();
     }
+    
     private void HandleMovement()
     {
         Vector2 inputVector = gameInputManager.InputVector();
         
-        Vector3 moveDir= new Vector3(inputVector.x, 0, inputVector.y).normalized;
+        Transform cameraTransform = Camera.main.transform;
+        Vector3 cameraForward = cameraTransform.forward;
+        Vector3 cameraRight = cameraTransform.right;
 
-        bool isMoving = moveDir != Vector3.zero;
+        cameraForward.y = 0f;
+        cameraRight.y = 0f;
+        cameraForward.Normalize();
+        cameraRight.Normalize();
+
+        Vector3 moveDir = (cameraForward * inputVector.y + cameraRight * inputVector.x).normalized;
+        bool isMoving = inputVector.sqrMagnitude > 0.01f;
+
+        // By default, moving triggers running. Holding Shift (IsSprinting) triggers walking.
+        bool isWalking = isMoving && gameInputManager.IsSprinting(); 
+        bool isRunning = isMoving && !isWalking;
+
+        // 1. Gravity and Grounding
+        if (characterController.isGrounded && velocityY < 0)
+        {
+            velocityY = -2f; 
+        }
+
+        // 2. Jump Logic
+        if (characterController.isGrounded && gameInputManager.WasJumpPressed())
+        {
+            // Physics formula for jumping to a specific height: v = sqrt(h * -2 * g)
+            velocityY = Mathf.Sqrt(jumpHeight * -2f * Physics.gravity.y);
+            
+            if (animator != null)
+            {
+                animator.SetTrigger("Jump");
+            }
+        }
+
+        // Apply gravity (multiplied by gravityScale for a snappier feel)
+        velocityY += Physics.gravity.y * gravityScale * Time.deltaTime;
 
         if (animator != null)
         {
-            animator.SetBool("IsWalking", isMoving);
+            animator.SetBool("IsWalking", isWalking);
+            animator.SetBool("IsRunning", isRunning);
+            animator.SetBool("IsGrounded", characterController.isGrounded);
+            
+            if (isRunning) animator.speed = 1.2f; 
+            else if (isWalking) animator.speed = 1.0f;
+            else animator.speed = 1.0f;
         }
 
-        //if no input then exit
-        if (!isMoving)
+        // 3. Movement
+        float currentSpeed = isRunning ? runSpeed : (isWalking ? speed : 0f);
+        Vector3 velocity = (isMoving ? moveDir : Vector3.zero) * currentSpeed;
+        velocity.y = velocityY;
+
+        characterController.Move(velocity * Time.deltaTime);
+
+        // Handle footsteps logic
+        HandleFootsteps(isWalking, isRunning);
+
+        // 4. Rotation
+        if (isMoving)
         {
-            return;
-        }
-    
-        //rotate player to move direction
-        transform.forward = Vector3.Slerp(transform.forward, moveDir, Time.deltaTime * rotationSpeed);
-        
-        int layerMask = ~LayerMask.GetMask("TriggerZone");
-        float moveDistance = speed * Time.deltaTime;
-        float playerRadius = .7f;
-        float playerHeight = 2f;
-        
-        //check if player can move in that direction
-        bool canMove = !Physics.CapsuleCast(transform.position,transform.position + Vector3.up*playerHeight,playerRadius,moveDir,moveDistance,layerMask,QueryTriggerInteraction.Ignore);
-
-        //bool canMove = !Physics.CapsuleCast(transform.position,transform.position + Vector3.up*playerHeight,playerRadius,movement,moveDistance);
-        if (!canMove){
-            //if cant move in move direction
-
-            //try to move only in x direction
-            Vector3 moveDirX = new Vector3(moveDir.x, 0, 0).normalized;
-            canMove = !Physics.CapsuleCast(transform.position,transform.position + Vector3.up*playerHeight,playerRadius,moveDirX,moveDistance,layerMask,QueryTriggerInteraction.Ignore);
-            if (canMove)
-            //can move in x direction
-            {
-                moveDir = moveDirX;
-            }
-            else //cant move in x dir
-            {
-                //try move in z direction
-                Vector3 moveDirZ = new Vector3(0, 0, moveDir.z).normalized;
-                canMove = !Physics.CapsuleCast(transform.position,transform.position + Vector3.up*playerHeight,playerRadius,moveDirZ,moveDistance,layerMask,QueryTriggerInteraction.Ignore);
-                // try to move only in z direction
-                if (canMove)
-                //can move in z direction only
-                {
-                     moveDir = moveDirZ;
-                }
-            }
-        }
-         if (canMove)
-        {
-            //if can move in move direction, move player
-            transform.position += moveDir *moveDistance ; 
+            Quaternion targetRotation = Quaternion.LookRotation(moveDir);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
         }
     }
-    
-    
-}
 
+    private void HandleFootsteps(bool isWalking, bool isRunning)
+    {
+        if (footstepSource == null || footstepSound == null) return;
+
+        bool isMovingOnGround = characterController.isGrounded && (isWalking || isRunning);
+
+        if (isMovingOnGround)
+        {
+            // Assign clip and set it to loop if it hasn't been set
+            if (footstepSource.clip != footstepSound)
+            {
+                footstepSource.clip = footstepSound;
+                footstepSource.loop = true;
+            }
+
+            // Start playing one unique sound if it isn't already playing
+            if (!footstepSource.isPlaying)
+            {
+                footstepSource.Play();
+            }
+
+            // Dynamically adjust pitch and volume depending on speed
+            footstepSource.pitch = isRunning ? 1.2f : 1.0f; // Run pitch is higher
+            footstepSource.volume = isRunning ? 0.8f : 0.4f; // Run is louder
+        }
+        else
+        {
+            // Immediately stop the sound when stopped or jumping
+            if (footstepSource.isPlaying)
+            {
+                footstepSource.Stop();
+            }
+        }
+    }
+}

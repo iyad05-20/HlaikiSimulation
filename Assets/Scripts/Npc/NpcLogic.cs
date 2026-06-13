@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
+using JemaaGame.UI;
 
 public class NpcLogic : MonoBehaviour
 {
@@ -14,26 +15,20 @@ public class NpcLogic : MonoBehaviour
     [Header("UI")]
     [SerializeField] public GameObject myBulleNPC;
     [SerializeField] public TMPro.TextMeshProUGUI myTxtBulleNPC;
-    private GameObject ButtonE;
     private AnchorFollowPlayer anchorFollowPlayer;
 
     protected bool isPlayerInRange = false;
     protected bool isInteracting = false;
     protected Transform playerTransform;
     private Quaternion rotationBeforeInteraction;
+    private Quaternion npcRotationBeforeInteraction;
     private Coroutine rotationCoroutine;
     private float smoothRotationSpeed = 8f;
 
     // Awake runs before Start for ALL objects, and is NOT hidden by derived classes.
-    // We find all references here (while ButtonE is still active in the scene).
+    // We find all references here.
     private void Awake()
     {
-        ButtonE = GameObject.FindWithTag("ButtonE");
-        if (ButtonE == null)
-        {
-            Debug.LogWarning("[NpcLogic] No object with tag 'ButtonE' found! Make sure it starts ACTIVE in the scene.");
-        }
-
         gameInputManager = FindAnyObjectByType<GameInputManager>();
         inputHandler = FindAnyObjectByType<InputHandler>();
 
@@ -49,15 +44,9 @@ public class NpcLogic : MonoBehaviour
         }
     }
 
-    // Start: subscribe to events and deactivate ButtonE (now that Awake already found it).
+    // Start: subscribe to events.
     private void Start()
     {
-        if (ButtonE != null)
-        {
-            ButtonE.SetActive(false);
-            Debug.Log("[NpcLogic] ButtonE found and deactivated in Start.");
-        }
-
         if (gameInputManager != null)
         {
             gameInputManager.OnInteraction += GameInputManager_OnInteraction;
@@ -75,8 +64,8 @@ public class NpcLogic : MonoBehaviour
     {
         if (isPlayerInRange && !isInteracting)
         {
-            // Hide the "Press E" prompt when interaction starts
-            if (ButtonE != null) ButtonE.SetActive(false);
+            // Hide the interaction popup when interaction starts
+            if (InteractionPopup.Instance != null) InteractionPopup.Instance.Hide();
             StartCoroutine(HandleInteractionSequence());
         }
     }
@@ -84,28 +73,42 @@ public class NpcLogic : MonoBehaviour
     private IEnumerator HandleInteractionSequence()
     {
         isInteracting = true;
+        Transform targetPlayer = playerTransform;
 
-        if (playerTransform != null)
+        if (ButtonEManager.Instance != null) ButtonEManager.Instance.ShowButtonE(false);
+
+        if (targetPlayer != null)
         {
-            rotationBeforeInteraction = playerTransform.rotation;
-            Vector3 directionToNPC = transform.position - playerTransform.position;
+            rotationBeforeInteraction = targetPlayer.rotation;
+            npcRotationBeforeInteraction = transform.rotation;
+
+            Vector3 directionToNPC = transform.position - targetPlayer.position;
             directionToNPC.y = 0f; // Garder la rotation uniquement sur l'axe Y (horizontale)
-            if (directionToNPC != Vector3.zero)
+            
+            Vector3 directionToPlayer = targetPlayer.position - transform.position;
+            directionToPlayer.y = 0f;
+
+            if (directionToNPC != Vector3.zero && directionToPlayer != Vector3.zero)
             {
-                Quaternion targetRotation = Quaternion.LookRotation(directionToNPC);
+                Quaternion targetPlayerRotation = Quaternion.LookRotation(directionToNPC);
+                Quaternion targetNPCRotation = Quaternion.LookRotation(directionToPlayer);
+                
                 if (rotationCoroutine != null) StopCoroutine(rotationCoroutine);
                 
                 // Wait until the rotation is fully completed
-                yield return rotationCoroutine = StartCoroutine(SmoothRotate(targetRotation));
+                yield return rotationCoroutine = StartCoroutine(SmoothRotateBoth(targetPlayerRotation, targetNPCRotation, targetPlayer));
             }
         }
-        if (anchorFollowPlayer != null)
+        if (anchorFollowPlayer != null && targetPlayer != null)
         {
-            anchorFollowPlayer.SetAnchorRotation(playerTransform); // Align the anchor with the NPC's rotation
-            anchorFollowPlayer.SetAnchorTransform(playerTransform); // Ensure the anchor follows the player during dialogue
+            anchorFollowPlayer.SetAnchorRotation(targetPlayer); // Align the anchor with the NPC's rotation
+            anchorFollowPlayer.SetAnchorTransform(targetPlayer); // Ensure the anchor follows the player during dialogue
             Debug.Log("Anchor rotation set to: " + transform.rotation);
         }
-        Debug.Log("Player rotation set to: " + playerTransform.rotation);
+        if (targetPlayer != null)
+        {
+            Debug.Log("Player rotation set to: " + targetPlayer.rotation);
+        }
         yield return null; // Just to ensure we wait a frame after rotation before starting interaction
         // Only switch cameras and start UI AFTER rotation is done
         Interact();
@@ -114,25 +117,34 @@ public class NpcLogic : MonoBehaviour
     public void ResetPlayerTransform()
     {
         isInteracting = false;
-        if (playerTransform != null)
+        Transform targetPlayer = playerTransform;
+        if (targetPlayer == null)
+        {
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null) targetPlayer = playerObj.transform;
+        }
+
+        if (targetPlayer != null)
         {
             if (rotationCoroutine != null) StopCoroutine(rotationCoroutine);
-            rotationCoroutine = StartCoroutine(SmoothRotate(rotationBeforeInteraction));
+            rotationCoroutine = StartCoroutine(SmoothRotateBoth(rotationBeforeInteraction, npcRotationBeforeInteraction, targetPlayer));
         }
     }
 
-    private IEnumerator SmoothRotate(Quaternion targetRotation)
+    private IEnumerator SmoothRotateBoth(Quaternion targetPlayerRotation, Quaternion targetNPCRotation, Transform targetPlayer)
     {
-        while (playerTransform != null && Quaternion.Angle(playerTransform.rotation, targetRotation) > 0.1f)
+        while (targetPlayer != null && (Quaternion.Angle(targetPlayer.rotation, targetPlayerRotation) > 0.1f || Quaternion.Angle(transform.rotation, targetNPCRotation) > 0.1f))
         {
-            playerTransform.rotation = Quaternion.Slerp(playerTransform.rotation, targetRotation, Time.deltaTime * smoothRotationSpeed);
+            targetPlayer.rotation = Quaternion.Slerp(targetPlayer.rotation, targetPlayerRotation, Time.deltaTime * smoothRotationSpeed);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetNPCRotation, Time.deltaTime * smoothRotationSpeed);
             yield return null;
         }
         
-        if (playerTransform != null)
+        if (targetPlayer != null)
         {
-            playerTransform.rotation = targetRotation;
+            targetPlayer.rotation = targetPlayerRotation;
         }
+        transform.rotation = targetNPCRotation;
     }
     
 
@@ -145,10 +157,13 @@ public class NpcLogic : MonoBehaviour
             isPlayerInRange = true;
             playerTransform = other.transform;
             Debug.Log($"[NPC] Player in range of {npcName}");
-            if (ButtonE != null)
+
+            if (ButtonEManager.Instance != null) ButtonEManager.Instance.ShowButtonE(true);
+
+            if (InteractionPopup.Instance != null)
             {
-                Debug.Log("[NPCLogic] Showing ButtonE");
-                ButtonE.SetActive(true);
+                Debug.Log("[NPCLogic] Showing InteractionPopup");
+                InteractionPopup.Instance.Show(npcName, npcRole);
             }
         }
     }
@@ -162,9 +177,12 @@ public class NpcLogic : MonoBehaviour
                 playerTransform = null;
             }
             Debug.Log($"[NPC] Player left range of {npcName}");
-            if (ButtonE != null)
+
+            if (ButtonEManager.Instance != null) ButtonEManager.Instance.ShowButtonE(false);
+
+            if (InteractionPopup.Instance != null)
             {
-                ButtonE.SetActive(false);
+                InteractionPopup.Instance.Hide();
             }
 
         }
@@ -173,6 +191,16 @@ public class NpcLogic : MonoBehaviour
     protected virtual void Interact()
     {
         Debug.Log($"[NPC] Interacting with {npcName} (role; {npcRole})");
+        
+        if (JemaaGame.UI.NotificationManager.Instance != null)
+        {
+            JemaaGame.UI.NotificationManager.Instance.Show(
+                "INTERACTION", 
+                "Interaction initiée avec un habitant de la place.", 
+                JemaaGame.UI.NotificationType.System
+            );
+        }
+
         if (inputHandler != null)
         {
             inputHandler.StartConversation(this);

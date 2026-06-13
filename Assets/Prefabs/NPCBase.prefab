@@ -37,8 +37,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 2.8}
-  m_SizeDelta: {x: 200, y: 73.89}
+  m_AnchoredPosition: {x: -4.5539, y: 3.92}
+  m_SizeDelta: {x: 517.9788, y: 73.89}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &9112265910612295244
 Canvas:
@@ -243,7 +243,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: New Text
+  m_text: fff
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
@@ -270,8 +270,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 16
-  m_fontSizeBase: 16
+  m_fontSize: 30
+  m_fontSizeBase: 30
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -440,7 +440,6 @@ GameObject:
   - component: {fileID: 2538196042935942119}
   - component: {fileID: 6146848837604853694}
   - component: {fileID: 5303456587596085974}
-  - component: {fileID: 8601113707465332735}
   - component: {fileID: 4809746843778064114}
   m_Layer: 3
   m_Name: NPCBase
@@ -514,19 +513,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &8601113707465332735
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6706473969725348897}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 46de15bf1f464ec419b4606e9c2716e5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GroqApiClient
-  apiKey: 
 --- !u!114 &4809746843778064114
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -543,14 +529,8 @@ MonoBehaviour:
   npcRole: 
   myBulleNPC: {fileID: 140858879648977234}
   myTxtBulleNPC: {fileID: 6850546344019165606}
-  personaBasePrompt: "Tu n'es pas un assistant. Tu es Hamid, 24 ans, musicien guembri
-    autodidacte \xE0 Jemaa el-Fna. Tu t'es form\xE9 seul et \xE7a te ronge. Tu parles
-    vite. Tu utilises des m\xE9taphores musicales. Si tu es ins\xE9cure tu compenses
-    par l'humour."
-  scoringRules: "R\xC8GLES:\n- R\xE9ponds en fran\xE7ais\n- 2 \xE0 3 phrases max\n\nFORMAT
-    DE SORTIE OBLIGATOIRE (SANS EXCEPTION):\nRESPONSE: [ta r\xE9ponse ici]\nSCORING:
-    {\"favorability_delta\": <entier>, \"emotion_pressure\": \"<positive|negative|neutral>\",
-    \"emotion_shift\": \"<open|occupied|closed|null>\", \"reason\": \"<3 mots max>\"}"
+  npcId: hamid
   currentEmotion: open
   currentMood: tu es de bonne humeur
   favorability: 0
+  reputation: 0

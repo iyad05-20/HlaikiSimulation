@@ -79,18 +79,55 @@ public class DialoguePanel : MonoBehaviour
             StopCoroutine(typewriterCoroutine);
 
         if (currentTxtBulleNPC != null)
+        {
+            AdjustBubbleSize(currentTxtBulleNPC, currentBulleNPC, text);
             typewriterCoroutine = StartCoroutine(TypewriterEffect(currentTxtBulleNPC, text));
+        }
     }
 
     public void DisplayPlayerMessage(string text)
     {
         if (txtBullePlayer != null)
         {
+            AdjustBubbleSize(txtBullePlayer, bullePlayer, text);
             txtBullePlayer.text = text;
         }
         else
         {
             Debug.LogError("[DialoguePanel] txtBullePlayer is not assigned in the Inspector!");
+        }
+    }
+
+    private void AdjustBubbleSize(TextMeshProUGUI txt, GameObject bulleObj, string fullText)
+    {
+        if (txt == null || bulleObj == null) return;
+
+        // Si vous utilisez ContentSizeFitter, on force l'actualisation
+        ContentSizeFitter fitter = bulleObj.GetComponent<ContentSizeFitter>();
+        if (fitter != null)
+        {
+            string oldText = txt.text;
+            txt.text = fullText;
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(bulleObj.GetComponent<RectTransform>());
+            txt.text = oldText;
+            return;
+        }
+
+        // Sinon, redimensionnement manuel de la hauteur de la bulle
+        RectTransform txtRect = txt.GetComponent<RectTransform>();
+        RectTransform bulleRect = bulleObj.GetComponent<RectTransform>();
+        
+        if (txtRect != null && bulleRect != null)
+        {
+            // Calculer la hauteur nécessaire pour le texte complet
+            Vector2 preferredSize = txt.GetPreferredValues(fullText, txtRect.rect.width, 0f);
+            
+            // Padding pour que le texte ne touche pas les bords (à ajuster si besoin)
+            float paddingY = 50f; 
+            
+            // On met à jour uniquement la hauteur de la bulle
+            bulleRect.sizeDelta = new Vector2(bulleRect.sizeDelta.x, preferredSize.y + paddingY);
         }
     }
 
