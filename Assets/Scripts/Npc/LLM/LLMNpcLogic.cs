@@ -126,6 +126,11 @@ public class LLMNpcLogic : NpcLogic
         base.Interact();
         PickCycleVariant();
 
+        if (NpcStatsUI.Instance != null)
+        {
+            NpcStatsUI.Instance.UpdateMetrics(favorability, GameManager.GlobalReputation);
+        }
+
         if (chatHistory.Count == 0)
         {
             ReceivePlayerMessage("*Le joueur s'approche et te regarde en silence*");
@@ -430,6 +435,11 @@ public class LLMNpcLogic : NpcLogic
 
         Debug.Log($"[LLM] NPC: {npcId} | Fav: {favorability} | GlobalRep: {GameManager.GlobalReputation} | Reason: {scoring.reason}");
 
+        if (NpcStatsUI.Instance != null)
+        {
+            NpcStatsUI.Instance.UpdateMetrics(favorability, GameManager.GlobalReputation);
+        }
+
         // 3 — Curiosity flag
         if (scoring.curiosity_triggered)
             conditions["curiosity_shown"] = true;
@@ -500,6 +510,11 @@ public class LLMNpcLogic : NpcLogic
             currentEmotion = forceEmotion;
 
         Debug.Log($"[LLMNpcLogic] External event {eventId} applied on {npcId}: fav {favorabilityDelta:+#;-#;0}, rep {reputationDelta:+#;-#;0}");
+
+        if (NpcStatsUI.Instance != null)
+        {
+            NpcStatsUI.Instance.UpdateMetrics(favorability, GameManager.GlobalReputation);
+        }
     }
 
     public void SetCondition(string conditionKey, bool value)

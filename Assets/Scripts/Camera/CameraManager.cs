@@ -98,13 +98,6 @@ public class CameraManager : MonoBehaviour
 
     void Update()
     {
-        // Toggle cursor with Escape
-        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
-        {
-            if (Cursor.lockState == CursorLockMode.Locked) UnlockCursor();
-            else LockCursor();
-        }
-
         // Capture Input in Update for zero-latency response
         if (transposer != null && explorationCamera.Priority == PRIORITY_HIGH && Cursor.lockState == CursorLockMode.Locked)
         {

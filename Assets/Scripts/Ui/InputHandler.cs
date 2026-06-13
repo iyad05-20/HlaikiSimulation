@@ -80,9 +80,23 @@ public class InputHandler : MonoBehaviour
         activeNpc    = null;
         _currentNpc  = null;
         
+        // 1. Cacher l'UI d'abord
+        dialoguePanel.HidePanel();
+        
+        // 2. Forcer la perte de focus de l'input field pour redonner le contrôle au jeu
+        if (UnityEngine.EventSystems.EventSystem.current != null)
+        {
+            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+        }
+
+        // 3. Réactiver les contrôles du joueur et la caméra
         gameInputManager.EnablePlayerMap();
         cameraManager.SwitchToExploration();
-        dialoguePanel.HidePanel();
+        
+        if (NpcStatsUI.Instance != null)
+        {
+            NpcStatsUI.Instance.Hide();
+        }
 
         // Trigger Halka composition if end-of-cycle and fragments collected
         if (HalkaOrchestrator.Instance != null)
